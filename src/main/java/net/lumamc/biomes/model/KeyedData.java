@@ -7,7 +7,8 @@ import org.bukkit.persistence.PersistentDataHolder;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Nullable;
 
-public class KeyedData<V> {
+public final class KeyedData<V> {
+
 
     public static final KeyedData<String> ANCHOR = new KeyedData<>("anchor", PersistentDataType.STRING);
     public static final KeyedData<String> ANCHOR_BLOCK = new KeyedData<>("anchor-block", PersistentDataType.STRING);
@@ -52,21 +53,9 @@ public class KeyedData<V> {
         holder.getPersistentDataContainer().set(namespacedKey, type, value);
     }
 
-    public void set(ItemStack item, V value) {
-        if (item.hasItemMeta()) {
-            set(item.getItemMeta(), value);
-        }
-    }
 
     public void remove(PersistentDataHolder holder) {
         holder.getPersistentDataContainer().remove(namespacedKey);
     }
-
-    public void remove(ItemStack item) {
-        if (item.hasItemMeta()) {
-            remove(item.getItemMeta());
-        }
-    }
-
 
 }

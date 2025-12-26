@@ -3,6 +3,7 @@ plugins {
     id("com.gradleup.shadow") version "9.3.0"
     id("io.freefair.lombok") version "9.1.0"
     id("xyz.jpenilla.run-paper") version "2.3.1"
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.19"
 }
 
 group = "net.lumamc.biomes"
@@ -16,9 +17,10 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    //compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")
     implementation("eu.okaeri:okaeri-configs-yaml-bukkit:5.0.5")
-    implementation("me.outspending.biomesapi:BiomesAPI:0.0.14")
+    implementation("me.outspending.biomesapi:BiomesAPI:0.0.17")
     implementation("com.zaxxer:HikariCP:6.3.0")
     //implementation("com.jeff-media:custom-block-data:2.2.4")
 

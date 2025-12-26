@@ -1,5 +1,7 @@
 package net.lumamc.biomes.events;
 
+import com.google.common.base.Preconditions;
+import me.outspending.biomesapi.registry.BiomeResourceKey;
 import net.lumamc.biomes.model.CachedLittleBiomes;
 import net.lumamc.biomes.model.KeyedData;
 import net.lumamc.biomes.model.WorldTiedChunkLocation;
@@ -23,7 +25,13 @@ public class ChunkListeners implements Listener {
             }
 
             WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(chunk);
-            CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation);
+            String biomeKeyString = Preconditions.checkNotNull(KeyedData.CHUNK_BIOME.get(chunk), "Expected to find biome key for chunk (%d, %d) in world %s".formatted(
+                    chunk.getX(), chunk.getZ(), chunk.getWorld().getName()
+            ));
+
+
+            BiomeResourceKey biomeKey = BiomeResourceKey.fromString(biomeKeyString);
+            CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation, biomeKey);
         });
     }
 

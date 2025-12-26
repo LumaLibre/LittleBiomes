@@ -1,25 +1,34 @@
 package net.lumamc.biomes.model;
 
+import me.outspending.biomesapi.registry.BiomeResourceKey;
 import net.lumamc.biomes.PetiteBiomes;
 
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public final class CachedLittleBiomes {
 
     public static CachedLittleBiomes INSTANCE = new CachedLittleBiomes();
 
-    private final Set<WorldTiedChunkLocation> cachedChunkLocations = new HashSet<>();
+    private final Map<WorldTiedChunkLocation, BiomeResourceKey> cachedChunkLocations = new HashMap<>();
 
     public boolean isChunkCached(WorldTiedChunkLocation location) {
-        return cachedChunkLocations.contains(location);
+        return cachedChunkLocations.containsKey(location);
     }
 
-    public boolean isWithinRadiusOfCachedChunk(WorldTiedChunkLocation chunk) {
+    public boolean isChunkCached(WorldTiedChunkLocation location, BiomeResourceKey biomeKey) {
+        BiomeResourceKey cachedBiomeKey = cachedChunkLocations.get(location);
+        return cachedBiomeKey != null && cachedBiomeKey.equals(biomeKey);
+    }
+
+    public boolean isWithinRadiusOfCachedChunk(WorldTiedChunkLocation chunk, BiomeResourceKey biomeKey) {
         int radius = PetiteBiomes.okaeriConfig().anchorBiomeRadius();
 
-        for (WorldTiedChunkLocation cachedLocation : cachedChunkLocations) {
-            if (!cachedLocation.world().equals(chunk.world())) {
+        for (var entry : cachedChunkLocations.entrySet()) {
+            WorldTiedChunkLocation cachedLocation = entry.getKey();
+            BiomeResourceKey cachedBiomeKey = entry.getValue();
+            if (!cachedBiomeKey.equals(biomeKey) || !cachedLocation.world().equals(chunk.world())) {
                 continue;
             }
 
@@ -33,13 +42,17 @@ public final class CachedLittleBiomes {
         return false;
     }
 
-    public void cacheChunk(WorldTiedChunkLocation location) {
-        cachedChunkLocations.add(location);
+    public void cacheChunk(WorldTiedChunkLocation location, BiomeResourceKey biomeKey) {
+        cachedChunkLocations.put(location, biomeKey);
         PetiteBiomes.debug("Cached new chunk, size: %d".formatted(cachedChunkLocations.size()));
     }
 
     public void uncacheChunk(WorldTiedChunkLocation location) {
         cachedChunkLocations.remove(location);
         PetiteBiomes.debug("Uncached chunk, size: %d".formatted(cachedChunkLocations.size()));
+    }
+
+    public Set<WorldTiedChunkLocation> getCachedChunks() {
+        return cachedChunkLocations.keySet();
     }
 }

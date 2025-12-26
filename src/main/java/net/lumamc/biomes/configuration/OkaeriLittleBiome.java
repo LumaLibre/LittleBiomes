@@ -1,6 +1,5 @@
 package net.lumamc.biomes.configuration;
 
-import com.google.common.base.Preconditions;
 import eu.okaeri.configs.OkaeriConfig;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -19,10 +18,8 @@ import net.lumamc.biomes.model.KeyedData;
 import net.lumamc.biomes.model.WorldTiedChunkLocation;
 import net.lumamc.biomes.util.TextUtil;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataType;
 
 import java.util.Map;
 
@@ -43,20 +40,20 @@ public class OkaeriLittleBiome extends OkaeriConfig {
     private String skyColor = "#6F8BEA";
     private String foliageColor = "#6F8BEA";
     private String grassColor = "#6F8BEA";
-    private Map<AmbientParticle, Float> ambientParticles = Map.of();
-    private Map<Material, Material> blockReplacements = Map.of();
+    private Map<AmbientParticle, Float> ambientParticles = Map.of(AmbientParticle.END_ROD, 0.01f);
+    private Map<Material, Material> blockReplacements = Map.of(Material.DIRT, Material.BLUE_CONCRETE_POWDER);
+
 
 
     public BiomeResourceKey biomeResourceKey() {
-        return BiomeResourceKey.of(PETITE_BIOME_NAMESPACE, this.biomeName);
+        return BiomeResourceKey.of(PETITE_BIOME_NAMESPACE, this.name);
+    }
+
+    public boolean isRegistered() {
+        return BiomeHandler.isBiome(this.biomeResourceKey());
     }
 
     public boolean register() {
-//        if (BiomeHandler.isBiome(this.biomeResourceKey())) {
-//            return false;
-//        }
-
-
         CustomBiome customBiome = CustomBiome.builder()
                 .resourceKey(this.biomeResourceKey())
                 .settings(BiomeSettings.defaultSettings())
@@ -79,12 +76,42 @@ public class OkaeriLittleBiome extends OkaeriConfig {
         return true;
     }
 
+    public boolean modify() {
+        CustomBiome customBiome = CustomBiome.builder()
+                .resourceKey(this.biomeResourceKey())
+                .settings(BiomeSettings.defaultSettings())
+                .fogColor(fogColor)
+                .foliageColor(foliageColor)
+                .skyColor(skyColor)
+                .waterColor(waterColor)
+                .waterFogColor(waterFogColor)
+                .grassColor(grassColor)
+                .particleRenderer(new ParticleRenderer(ambientParticles))
+                .blockReplacements(
+                        blockReplacements.entrySet().stream()
+                                .map(entry -> BlockReplacement.of(entry.getKey(), entry.getValue()))
+                                .toArray(BlockReplacement[]::new)
+                )
+                .build();
+
+        CustomBiome registeredBiome = BiomeHandler.getBiome(this.biomeResourceKey());
+        if (customBiome.isSimilar(registeredBiome)) {
+            PetiteBiomes.debug("No modifications detected for biome: " + this.biomeResourceKey().toString());
+            return false;
+        }
+
+        customBiome.modify();
+        PetiteBiomes.debug("Modified custom biome: " + this.biomeResourceKey().toString());
+        return true;
+    }
+
+
     public void addToPacketHandler() {
         BiomeResourceKey biomeResourceKey = this.biomeResourceKey();
         PacketHandler packetHandler = PetiteBiomes.packetHandler();
 
         if (packetHandler.hasBiome(biomeResourceKey)) {
-            PetiteBiomes.debug("Packet handler already contains biome: " + biomeResourceKey.toString());
+            PetiteBiomes.debug("Packet handler already contains biome: " + biomeResourceKey);
             return;
         }
 
@@ -93,8 +120,8 @@ public class OkaeriLittleBiome extends OkaeriConfig {
                 .setCustomBiome(biomeResourceKey)
                 .setConditional((player, chunkLocation) -> {
                     WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(player.getWorld(), chunkLocation);
-                    //PetiteBiomes.debug("Checking biome condition for player " + player.getName() + " at " + worldTiedChunkLocation);
-                    return CachedLittleBiomes.INSTANCE.isChunkCached(worldTiedChunkLocation) || CachedLittleBiomes.INSTANCE.isWithinRadiusOfCachedChunk(worldTiedChunkLocation);
+
+                    return CachedLittleBiomes.INSTANCE.isChunkCached(worldTiedChunkLocation, biomeResourceKey) || CachedLittleBiomes.INSTANCE.isWithinRadiusOfCachedChunk(worldTiedChunkLocation, biomeResourceKey);
                 })
                 .build();
 
@@ -106,10 +133,10 @@ public class OkaeriLittleBiome extends OkaeriConfig {
     public ItemStack anchorItem() {
         ItemStack itemStack = new ItemStack(this.anchorMaterial);
         itemStack.editMeta(meta -> {
-            meta.displayName(TextUtil.minimessage(this.name));
+            meta.displayName(TextUtil.minimessage("<!b>" + this.biomeName));
             meta.addEnchant(Enchantment.LURE, 5, true);
+            KeyedData.ANCHOR.set(meta, this.biomeResourceKey().toString());
         });
-        KeyedData.ANCHOR.set(itemStack, this.name);
         return itemStack;
     }
 

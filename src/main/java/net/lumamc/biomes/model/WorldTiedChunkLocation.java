@@ -17,4 +17,8 @@ public record WorldTiedChunkLocation(World world, int chunkX, int chunkZ) {
     public static WorldTiedChunkLocation of(Chunk chunk) {
         return new WorldTiedChunkLocation(chunk.getWorld(), chunk.getX(), chunk.getZ());
     }
+
+    public Chunk toBukkitChunk() {
+        return world.getChunkAt(chunkX, chunkZ);
+    }
 }

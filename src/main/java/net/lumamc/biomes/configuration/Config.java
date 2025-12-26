@@ -4,8 +4,8 @@ import eu.okaeri.configs.OkaeriConfig;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import org.bukkit.Material;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
 import java.util.Set;
 
 @Getter
@@ -13,11 +13,19 @@ import java.util.Set;
 public class Config extends OkaeriConfig {
 
     // TODO: Unused
-    private Set<Material> checkAnchorMaterials = Set.of(Material.ANVIL);
+    private Set<Material> checkBlockPhysAnchorMaterials = Set.of(Material.ANVIL);
 
     private int anchorBiomeRadius = 4;
 
-    private Map<String, OkaeriLittleBiome> littleBiomes = Map.of("example", new OkaeriLittleBiome()); // TODO: defaults
+    private Set<OkaeriLittleBiome> littleBiomes = Set.of(new OkaeriLittleBiome()); // TODO: defaults
+
+    @Nullable
+    public OkaeriLittleBiome getLittleBiomeByName(String name) {
+        return littleBiomes.stream()
+                .filter(biome -> biome.name().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
+    }
 
 
 }

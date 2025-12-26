@@ -11,8 +11,6 @@ import org.bukkit.Chunk;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
 
-import static net.lumamc.biomes.PetiteBiomes.PETITE_BIOME_NAMESPACE;
-
 @Getter
 @Builder
 @Accessors(fluent = true)
@@ -35,7 +33,9 @@ public class PlacedLittleBiome {
         Chunk chunk = block.getChunk();
         SimpleBlockLocation simpleBlockLocation = SimpleBlockLocation.of(chunk.getWorld(), block.getX(), block.getY(), block.getZ());
 
-        Preconditions.checkState(KeyedData.CHUNK_BIOME.matches(chunk),
+        System.out.println(chunk.getPersistentDataContainer().getKeys());
+
+        Preconditions.checkState(!KeyedData.CHUNK_BIOME.matches(chunk),
                 "Chunk at (%d, %d) in world %s already has a little biome assigned.".formatted(
                         chunk.getX(), chunk.getZ(), chunk.getWorld().getName()
                 ));
@@ -67,7 +67,7 @@ public class PlacedLittleBiome {
     }
 
     public ItemStack anchorItemStack() {
-        OkaeriLittleBiome littleBiomeConfig = PetiteBiomes.okaeriConfig().littleBiomes().get(this.name());
+        OkaeriLittleBiome littleBiomeConfig = PetiteBiomes.okaeriConfig().getLittleBiomeByName(this.name());
         Preconditions.checkNotNull(littleBiomeConfig, "No little biome config found for biome key: " + this.biomeKey);
 
         return littleBiomeConfig.anchorItem();
@@ -88,7 +88,7 @@ public class PlacedLittleBiome {
                 chunk.getX(), chunk.getZ(), chunk.getWorld().getName()
         ));
 
-        BiomeResourceKey biomeKey = BiomeResourceKey.of(PETITE_BIOME_NAMESPACE, biomeKeyString);
+        BiomeResourceKey biomeKey = BiomeResourceKey.fromString(biomeKeyString);
 
         return new PlacedLittleBiome(anchorLocation, biomeKey);
     }
