@@ -1,10 +1,10 @@
-package net.lumamc.biomes.events;
+package dev.lumas.biomes.events;
 
 import com.google.common.base.Preconditions;
 import me.outspending.biomesapi.registry.BiomeResourceKey;
-import net.lumamc.biomes.model.CachedLittleBiomes;
-import net.lumamc.biomes.model.KeyedData;
-import net.lumamc.biomes.model.WorldTiedChunkLocation;
+import dev.lumas.biomes.model.CachedLittleBiomes;
+import dev.lumas.biomes.model.KeyedData;
+import dev.lumas.biomes.model.WorldTiedChunkLocation;
 import org.bukkit.Chunk;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

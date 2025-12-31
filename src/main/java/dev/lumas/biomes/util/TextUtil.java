@@ -1,4 +1,4 @@
-package net.lumamc.biomes.util;
+package dev.lumas.biomes.util;
 
 import lombok.NoArgsConstructor;
 import net.kyori.adventure.audience.Audience;

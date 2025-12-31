@@ -1,6 +1,6 @@
-package net.lumamc.biomes.model;
+package dev.lumas.biomes.model;
 
-import net.lumamc.biomes.LittleBiomes;
+import dev.lumas.biomes.LittleBiomes;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataHolder;

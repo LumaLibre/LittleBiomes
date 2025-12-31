@@ -1,12 +1,12 @@
-package net.lumamc.biomes.commands.subcommand;
+package dev.lumas.biomes.commands.subcommand;
 
 import com.google.common.base.Preconditions;
-import net.lumamc.biomes.commands.Subcommand;
-import net.lumamc.biomes.model.CachedLittleBiomes;
-import net.lumamc.biomes.model.KeyedData;
-import net.lumamc.biomes.model.SimpleBlockLocation;
-import net.lumamc.biomes.model.WorldTiedChunkLocation;
-import net.lumamc.biomes.util.TextUtil;
+import dev.lumas.biomes.commands.Subcommand;
+import dev.lumas.biomes.model.CachedLittleBiomes;
+import dev.lumas.biomes.model.KeyedData;
+import dev.lumas.biomes.model.SimpleBlockLocation;
+import dev.lumas.biomes.model.WorldTiedChunkLocation;
+import dev.lumas.biomes.util.TextUtil;
 import org.bukkit.Chunk;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;

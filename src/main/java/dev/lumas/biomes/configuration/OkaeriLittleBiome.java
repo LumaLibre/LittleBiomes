@@ -1,4 +1,4 @@
-package net.lumamc.biomes.configuration;
+package dev.lumas.biomes.configuration;
 
 import eu.okaeri.configs.OkaeriConfig;
 import lombok.Getter;
@@ -12,12 +12,12 @@ import me.outspending.biomesapi.packet.data.PhonyCustomBiome;
 import me.outspending.biomesapi.registry.BiomeResourceKey;
 import me.outspending.biomesapi.renderer.AmbientParticle;
 import me.outspending.biomesapi.renderer.ParticleRenderer;
-import net.lumamc.biomes.LittleBiomes;
-import net.lumamc.biomes.events.BadRegistryPrevention;
-import net.lumamc.biomes.model.CachedLittleBiomes;
-import net.lumamc.biomes.model.KeyedData;
-import net.lumamc.biomes.model.WorldTiedChunkLocation;
-import net.lumamc.biomes.util.TextUtil;
+import dev.lumas.biomes.LittleBiomes;
+import dev.lumas.biomes.events.BadRegistryPrevention;
+import dev.lumas.biomes.model.CachedLittleBiomes;
+import dev.lumas.biomes.model.KeyedData;
+import dev.lumas.biomes.model.WorldTiedChunkLocation;
+import dev.lumas.biomes.util.TextUtil;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static net.lumamc.biomes.LittleBiomes.LITTLE_BIOME_NAMESPACE;
+import static dev.lumas.biomes.LittleBiomes.LITTLE_BIOME_NAMESPACE;
 
 @Getter
 @Accessors(fluent = true)

@@ -1,11 +1,11 @@
-package net.lumamc.biomes.commands.subcommand;
+package dev.lumas.biomes.commands.subcommand;
 
-import net.lumamc.biomes.LittleBiomes;
-import net.lumamc.biomes.commands.Subcommand;
-import net.lumamc.biomes.configuration.Config;
-import net.lumamc.biomes.configuration.OkaeriLittleBiome;
-import net.lumamc.biomes.events.BadRegistryPrevention;
-import net.lumamc.biomes.util.TextUtil;
+import dev.lumas.biomes.LittleBiomes;
+import dev.lumas.biomes.commands.Subcommand;
+import dev.lumas.biomes.configuration.Config;
+import dev.lumas.biomes.configuration.OkaeriLittleBiome;
+import dev.lumas.biomes.events.BadRegistryPrevention;
+import dev.lumas.biomes.util.TextUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;

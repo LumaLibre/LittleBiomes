@@ -1,8 +1,8 @@
-package net.lumamc.biomes.util;
+package dev.lumas.biomes.util;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import lombok.NoArgsConstructor;
-import net.lumamc.biomes.LittleBiomes;
+import dev.lumas.biomes.LittleBiomes;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitTask;
 

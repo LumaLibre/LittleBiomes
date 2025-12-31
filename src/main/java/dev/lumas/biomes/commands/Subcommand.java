@@ -1,4 +1,4 @@
-package net.lumamc.biomes.commands;
+package dev.lumas.biomes.commands;
 
 import lombok.Builder;
 import org.bukkit.command.CommandSender;

@@ -1,4 +1,4 @@
-package net.lumamc.biomes.model;
+package dev.lumas.biomes.model;
 
 import me.outspending.biomesapi.packet.data.ChunkLocation;
 import org.bukkit.Chunk;

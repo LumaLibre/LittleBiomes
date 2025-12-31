@@ -6,7 +6,7 @@ plugins {
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.19"
 }
 
-group = "net.lumamc.biomes"
+group = "dev.lumas.biomes"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -19,7 +19,7 @@ repositories {
 dependencies {
     paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")
     implementation("eu.okaeri:okaeri-configs-yaml-bukkit:5.0.5")
-    implementation("me.outspending.biomesapi:BiomesAPI:0.0.19")
+    implementation("me.outspending.biomesapi:BiomesAPI:0.0.20")
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -40,7 +40,7 @@ tasks {
     }
 
     shadowJar {
-        val shaded = "net.lumamc.biomes.shaded"
+        val shaded = "dev.lumas.biomes.shaded"
         relocate("eu.okaeri", "$shaded.okaeri")
         relocate("me.outspending", "$shaded.biomesapi")
         archiveClassifier.set("")

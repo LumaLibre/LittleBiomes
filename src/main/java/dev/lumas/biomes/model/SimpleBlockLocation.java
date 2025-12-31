@@ -1,4 +1,4 @@
-package net.lumamc.biomes.model;
+package dev.lumas.biomes.model;
 
 import org.bukkit.Location;
 import org.bukkit.World;

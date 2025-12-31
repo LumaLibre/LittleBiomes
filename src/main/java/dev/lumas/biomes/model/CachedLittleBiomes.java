@@ -1,7 +1,7 @@
-package net.lumamc.biomes.model;
+package dev.lumas.biomes.model;
 
 import me.outspending.biomesapi.registry.BiomeResourceKey;
-import net.lumamc.biomes.LittleBiomes;
+import dev.lumas.biomes.LittleBiomes;
 
 import java.util.HashMap;
 import java.util.Map;

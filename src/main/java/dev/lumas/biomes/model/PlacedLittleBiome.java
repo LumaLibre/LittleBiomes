@@ -1,12 +1,12 @@
-package net.lumamc.biomes.model;
+package dev.lumas.biomes.model;
 
 import com.google.common.base.Preconditions;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import me.outspending.biomesapi.registry.BiomeResourceKey;
-import net.lumamc.biomes.LittleBiomes;
-import net.lumamc.biomes.configuration.OkaeriLittleBiome;
+import dev.lumas.biomes.LittleBiomes;
+import dev.lumas.biomes.configuration.OkaeriLittleBiome;
 import org.bukkit.Chunk;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;

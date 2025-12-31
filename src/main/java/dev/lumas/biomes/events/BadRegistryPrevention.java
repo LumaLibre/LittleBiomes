@@ -1,4 +1,4 @@
-package net.lumamc.biomes.events;
+package dev.lumas.biomes.events;
 
 import me.outspending.biomesapi.registry.BiomeResourceKey;
 import org.bukkit.entity.Player;

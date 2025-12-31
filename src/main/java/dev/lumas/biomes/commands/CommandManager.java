@@ -1,9 +1,9 @@
-package net.lumamc.biomes.commands;
+package dev.lumas.biomes.commands;
 
-import net.lumamc.biomes.commands.subcommand.GiveAnchorCommand;
-import net.lumamc.biomes.commands.subcommand.NearestAnchorCommand;
-import net.lumamc.biomes.commands.subcommand.ReloadCommand;
-import net.lumamc.biomes.util.TextUtil;
+import dev.lumas.biomes.commands.subcommand.GiveAnchorCommand;
+import dev.lumas.biomes.commands.subcommand.NearestAnchorCommand;
+import dev.lumas.biomes.commands.subcommand.ReloadCommand;
+import dev.lumas.biomes.util.TextUtil;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;

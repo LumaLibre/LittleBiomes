@@ -1,5 +1,5 @@
 name: LittleBiomes
-main: net.lumamc.biomes.LittleBiomes
+main: dev.lumas.biomes.LittleBiomes
 version: '1.0-SNAPSHOT'
 api-version: 1.21
 depend:

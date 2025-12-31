@@ -1,9 +1,9 @@
-package net.lumamc.biomes.commands.subcommand;
+package dev.lumas.biomes.commands.subcommand;
 
 import com.google.common.base.Preconditions;
-import net.lumamc.biomes.LittleBiomes;
-import net.lumamc.biomes.commands.Subcommand;
-import net.lumamc.biomes.configuration.OkaeriLittleBiome;
+import dev.lumas.biomes.LittleBiomes;
+import dev.lumas.biomes.commands.Subcommand;
+import dev.lumas.biomes.configuration.OkaeriLittleBiome;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 

@@ -1,4 +1,4 @@
-package net.lumamc.biomes.configuration;
+package dev.lumas.biomes.configuration;
 
 import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.Comment;
