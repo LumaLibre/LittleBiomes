@@ -19,7 +19,7 @@ repositories {
 dependencies {
     paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")
     implementation("eu.okaeri:okaeri-configs-yaml-bukkit:5.0.5")
-    implementation("me.outspending.biomesapi:BiomesAPI:0.0.25")
+    implementation("me.outspending.biomesapi:BiomesAPI:1.0.2-932c824")
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
