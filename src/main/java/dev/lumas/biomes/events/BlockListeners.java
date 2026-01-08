@@ -17,6 +17,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -33,7 +34,7 @@ public class BlockListeners implements Listener {
     private static final BiomeUpdater BIOME_UPDATER = BiomeUpdater.of();
     private static final BlockData AIR_BLOCK_DATA = Material.AIR.createBlockData();
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
         Chunk chunk = block.getChunk();
@@ -68,7 +69,7 @@ public class BlockListeners implements Listener {
         BIOME_UPDATER.updateChunkRadius(chunk, radius);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
         ItemStack itemStack = event.getItemInHand();
 
@@ -108,7 +109,7 @@ public class BlockListeners implements Listener {
     }
 
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPistonExtend(BlockPistonExtendEvent event) {
         Chunk chunk = event.getBlock().getChunk();
         WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(chunk);
@@ -126,7 +127,7 @@ public class BlockListeners implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onBlockPhysics(EntityChangeBlockEvent event) {
         Block block = event.getBlock();
         Chunk chunk = block.getChunk();
@@ -164,7 +165,7 @@ public class BlockListeners implements Listener {
         BIOME_UPDATER.updateChunkRadius(chunk, radius);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
         Chunk chunk = event.getPlayer().getLocation().getChunk();
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK || !CachedLittleBiomes.INSTANCE.isChunkCached(WorldTiedChunkLocation.of(chunk))) {

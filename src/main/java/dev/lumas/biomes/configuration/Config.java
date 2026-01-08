@@ -4,7 +4,7 @@ import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.Comment;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import me.outspending.biomesapi.wrapper.environment.AmbientParticle;
+import me.outspending.biomesapi.wrapper.environment.particles.WrappedParticleTypes;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,7 @@ public class Config extends OkaeriConfig {
                     .anchorDisplayName("<blue><b>Basic Blue Biome Anchor")
                     .anchorLore(List.of("<gray>A simple little biome that is blue everywhere."))
                     .color("#6F8BEA")
-                    .ambientParticle(AmbientParticle.END_ROD, 0.01f)
+                    .ambientParticle(WrappedParticleTypes.END_ROD, 0.01f)
                     .blockReplacement(Material.BIRCH_LEAVES, Material.ACACIA_LEAVES)
                     .toOkaeriConfig(),
             OkaeriLittleBiome.basicBuilder()
@@ -49,7 +49,7 @@ public class Config extends OkaeriConfig {
                     .anchorDisplayName("<green><b>Basic Green Biome Anchor")
                     .anchorLore(List.of("<gray>A simple little biome that is green everywhere."))
                     .color("#6FEA8B")
-                    .ambientParticle(AmbientParticle.HAPPY_VILLAGER, 0.01f)
+                    .ambientParticle(WrappedParticleTypes.HAPPY_VILLAGER, 0.01f)
                     .blockReplacement(Material.OAK_LEAVES, Material.JUNGLE_LEAVES)
                     .blockReplacement(Material.ICE, Material.GREEN_WOOL)
                     .toOkaeriConfig()

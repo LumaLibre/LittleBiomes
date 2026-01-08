@@ -10,16 +10,16 @@ import me.outspending.biomesapi.packet.PacketHandler;
 import me.outspending.biomesapi.packet.data.BlockReplacement;
 import me.outspending.biomesapi.packet.data.PhonyCustomBiome;
 import me.outspending.biomesapi.registry.BiomeResourceKey;
-import me.outspending.biomesapi.renderer.ParticleRenderer;
 import dev.lumas.biomes.LittleBiomes;
 import dev.lumas.biomes.events.BadRegistryPrevention;
 import dev.lumas.biomes.model.CachedLittleBiomes;
 import dev.lumas.biomes.model.KeyedData;
 import dev.lumas.biomes.model.WorldTiedChunkLocation;
 import dev.lumas.biomes.util.TextUtil;
-import me.outspending.biomesapi.wrapper.environment.AmbientParticle;
 import me.outspending.biomesapi.wrapper.BiomeSettings;
 import me.outspending.biomesapi.wrapper.environment.GrassColorModifier;
+import me.outspending.biomesapi.wrapper.environment.particles.ParticleCatalog;
+import me.outspending.biomesapi.wrapper.environment.particles.WrappedParticleTypes;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
@@ -33,6 +33,7 @@ import static dev.lumas.biomes.LittleBiomes.LITTLE_BIOME_NAMESPACE;
 
 @Getter
 @Accessors(fluent = true)
+// TODO: Add support for complex particle types
 public class OkaeriLittleBiome extends OkaeriConfig {
 
     private String name;
@@ -48,7 +49,7 @@ public class OkaeriLittleBiome extends OkaeriConfig {
     private String grassColor;
     private GrassColorModifier grassColorModifier;
     private PacketHandler.Priority biomePriority;
-    private Map<AmbientParticle, Float> ambientParticles;
+    private Map<WrappedParticleTypes, Float> ambientParticles;
     private Map<Material, Material> blockReplacements;
 
     public BiomeResourceKey biomeResourceKey() {
@@ -60,6 +61,11 @@ public class OkaeriLittleBiome extends OkaeriConfig {
     }
 
     public boolean register() {
+        ParticleCatalog.Builder particleCatalog = ParticleCatalog.builder();
+        for (var entry : ambientParticles.entrySet()) {
+            particleCatalog.addSimple(entry.getKey(), entry.getValue());
+        }
+
         CustomBiome customBiome = CustomBiome.builder()
                 .resourceKey(this.biomeResourceKey())
                 .settings(BiomeSettings.defaultSettings())
@@ -69,7 +75,7 @@ public class OkaeriLittleBiome extends OkaeriConfig {
                 .waterColor(waterColor)
                 .waterFogColor(waterFogColor)
                 .grassColor(grassColor)
-                .particleRenderer(new ParticleRenderer(ambientParticles))
+                .particleCatalog(particleCatalog.build())
                 .blockReplacements(
                         blockReplacements.entrySet().stream()
                                 .map(entry -> BlockReplacement.of(entry.getKey(), entry.getValue()))
@@ -83,6 +89,11 @@ public class OkaeriLittleBiome extends OkaeriConfig {
     }
 
     public boolean modify() {
+        ParticleCatalog.Builder particleCatalog = ParticleCatalog.builder();
+        for (var entry : ambientParticles.entrySet()) {
+            particleCatalog.addSimple(entry.getKey(), entry.getValue());
+        }
+
         CustomBiome customBiome = CustomBiome.builder()
                 .resourceKey(this.biomeResourceKey())
                 .settings(BiomeSettings.defaultSettings())
@@ -92,7 +103,8 @@ public class OkaeriLittleBiome extends OkaeriConfig {
                 .waterColor(waterColor)
                 .waterFogColor(waterFogColor)
                 .grassColor(grassColor)
-                .particleRenderer(new ParticleRenderer(ambientParticles))
+                .grassColorModifier(grassColorModifier)
+                .particleCatalog(particleCatalog.build())
                 .blockReplacements(
                         blockReplacements.entrySet().stream()
                                 .map(entry -> BlockReplacement.of(entry.getKey(), entry.getValue()))
@@ -177,7 +189,7 @@ public class OkaeriLittleBiome extends OkaeriConfig {
         private List<String> anchorLore;
         private String color;
         private GrassColorModifier grassColorModifier = GrassColorModifier.NONE;
-        private Map<AmbientParticle, Float> ambientParticles = new HashMap<>();
+        private Map<WrappedParticleTypes, Float> ambientParticles = new HashMap<>();
         private Map<Material, Material> blockReplacements = new HashMap<>();
 
 
@@ -206,7 +218,7 @@ public class OkaeriLittleBiome extends OkaeriConfig {
             return this;
         }
 
-        public BasicBuilder ambientParticle(AmbientParticle particle, float density) {
+        public BasicBuilder ambientParticle(WrappedParticleTypes particle, float density) {
             this.ambientParticles.put(particle, density);
             return this;
         }
