@@ -1,7 +1,7 @@
 package dev.lumas.biomes.events;
 
 import com.google.common.base.Preconditions;
-import me.outspending.biomesapi.registry.BiomeResourceKey;
+import me.outspending.biomesapi.keys.ResourceKey;
 import dev.lumas.biomes.model.CachedLittleBiomes;
 import dev.lumas.biomes.model.KeyedData;
 import dev.lumas.biomes.model.WorldTiedChunkLocation;
@@ -30,7 +30,7 @@ public class ChunkListeners implements Listener {
             ));
 
 
-            BiomeResourceKey biomeKey = BiomeResourceKey.fromString(biomeKeyString);
+            ResourceKey biomeKey = ResourceKey.fromString(biomeKeyString);
             CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation, biomeKey);
         });
     }

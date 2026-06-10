@@ -5,9 +5,9 @@ import dev.lumas.biomes.model.WorldGuardHook;
 import eu.okaeri.configs.OkaeriConfig;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import me.outspending.biomesapi.biome.BiomeHandler;
 import me.outspending.biomesapi.biome.CustomBiome;
-import me.outspending.biomesapi.registry.BiomeResourceKey;
+import me.outspending.biomesapi.biome.RegisteredBiomes;
+import me.outspending.biomesapi.keys.ResourceKey;
 import dev.lumas.biomes.LittleBiomes;
 import dev.lumas.biomes.events.BadRegistryPrevention;
 import dev.lumas.biomes.model.CachedLittleBiomes;
@@ -63,12 +63,12 @@ public class OkaeriLittleBiome extends OkaeriConfig {
     private Map<String, Object> environmentAttributes;
 
 
-    public BiomeResourceKey biomeResourceKey() {
-        return BiomeResourceKey.of(LITTLE_BIOME_NAMESPACE, this.name);
+    public ResourceKey ResourceKey() {
+        return ResourceKey.of(LITTLE_BIOME_NAMESPACE, this.name);
     }
 
     public boolean isRegistered() {
-        return BiomeHandler.isBiome(this.biomeResourceKey());
+        return RegisteredBiomes.isRegistered(this.ResourceKey());
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -97,7 +97,7 @@ public class OkaeriLittleBiome extends OkaeriConfig {
         }
 
         return CustomBiome.builder()
-                .resourceKey(this.biomeResourceKey())
+                .resourceKey(this.ResourceKey())
                 .settings(BiomeSettings.defaultSettings())
                 .fogColor(fogColor)
                 .foliageColor(foliageColor)
@@ -122,43 +122,43 @@ public class OkaeriLittleBiome extends OkaeriConfig {
         CustomBiome customBiome = customBiome();
 
         customBiome.register();
-        LittleBiomes.debug("Registered custom biome: " + this.biomeResourceKey().toString());
+        LittleBiomes.debug("Registered custom biome: " + this.ResourceKey().toString());
     }
 
 
     public void modify() {
         CustomBiome customBiome = customBiome();
 
-        CustomBiome registeredBiome = BiomeHandler.getBiome(this.biomeResourceKey());
+        CustomBiome registeredBiome = RegisteredBiomes.get(this.ResourceKey());
         if (registeredBiome == null || customBiome.isSimilar(registeredBiome)) {
-            LittleBiomes.debug("No modifications detected for biome: " + this.biomeResourceKey().toString());
+            LittleBiomes.debug("No modifications detected for biome: " + this.ResourceKey().toString());
             return;
         }
 
         customBiome.modify();
-        LittleBiomes.debug("Modified custom biome: " + this.biomeResourceKey().toString());
+        LittleBiomes.debug("Modified custom biome: " + this.ResourceKey().toString());
     }
 
 
     public void addToPacketHandler() {
-        BiomeResourceKey biomeResourceKey = this.biomeResourceKey();
+        ResourceKey ResourceKey = this.ResourceKey();
         PacketHandler packetHandler = LittleBiomes.packetHandler();
 
-        if (packetHandler.hasBiome(biomeResourceKey)) {
-            LittleBiomes.debug("Packet handler already contains biome: " + biomeResourceKey);
+        if (packetHandler.hasBiome(ResourceKey)) {
+            LittleBiomes.debug("Packet handler already contains biome: " + ResourceKey);
             return;
         }
 
 
         PhonyCustomBiome phonyCustomBiome = PhonyCustomBiome.builder()
-                .setCustomBiome(biomeResourceKey)
+                .setCustomBiome(ResourceKey)
                 .setConditional((player, chunkLocation) -> {
-                    if (BadRegistryPrevention.shouldPrevent(biomeResourceKey, player)) {
+                    if (BadRegistryPrevention.shouldPrevent(ResourceKey, player)) {
                         return false;
                     }
 
                     WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(player.getWorld(), chunkLocation);
-                    if (CachedLittleBiomes.INSTANCE.isChunkCached(worldTiedChunkLocation, biomeResourceKey) || CachedLittleBiomes.INSTANCE.isWithinRadiusOfCachedChunk(worldTiedChunkLocation, biomeResourceKey)) {
+                    if (CachedLittleBiomes.INSTANCE.isChunkCached(worldTiedChunkLocation, ResourceKey) || CachedLittleBiomes.INSTANCE.isWithinRadiusOfCachedChunk(worldTiedChunkLocation, ResourceKey)) {
                         return true;
                     }
 
@@ -168,12 +168,12 @@ public class OkaeriLittleBiome extends OkaeriConfig {
                     }
 
                     String worldguardRegionLittleBiomeName = worldGuardHook.getWorldGuardRegionLittleBiomeName(worldTiedChunkLocation);
-                    return biomeResourceKey.key().value().equalsIgnoreCase(worldguardRegionLittleBiomeName);
+                    return ResourceKey.key().value().equalsIgnoreCase(worldguardRegionLittleBiomeName);
                 })
                 .build();
 
         packetHandler.appendBiome(phonyCustomBiome);
-        LittleBiomes.debug("Added biome to packet handler: " + this.biomeResourceKey().toString());
+        LittleBiomes.debug("Added biome to packet handler: " + this.ResourceKey().toString());
     }
 
 
@@ -187,7 +187,7 @@ public class OkaeriLittleBiome extends OkaeriConfig {
                     .map(line -> TextUtil.minimessage("<!i>" + line))
                     .toList()
             );
-            KeyedData.ANCHOR.set(meta, this.biomeResourceKey().toString());
+            KeyedData.ANCHOR.set(meta, this.ResourceKey().toString());
         });
         return itemStack;
     }
@@ -203,7 +203,7 @@ public class OkaeriLittleBiome extends OkaeriConfig {
             } else {
                 SimpleParticleData simpleParticleData = SimpleParticleData.fromParticleData(wrappedType.getParticleDataClass());
                 String context = ambientParticleData.get(simpleParticleData);
-                ParticleData<?> converted = simpleParticleData.create(context);
+                ParticleData converted = simpleParticleData.create(context);
 
                 particleCatalog.addComplex(wrappedType, probability, converted);
             }

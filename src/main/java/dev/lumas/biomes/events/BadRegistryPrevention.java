@@ -1,7 +1,7 @@
 package dev.lumas.biomes.events;
 
-import me.outspending.biomesapi.biome.BiomeHandler;
-import me.outspending.biomesapi.registry.BiomeResourceKey;
+import me.outspending.biomesapi.biome.RegisteredBiomes;
+import me.outspending.biomesapi.keys.ResourceKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -18,18 +18,18 @@ public class BadRegistryPrevention implements Listener {
 
     // lazy disconnect prevention when admins reload
 
-    private static final Map<BiomeResourceKey, List<UUID>> recentlyRegistered = new HashMap<>();
+    private static final Map<ResourceKey, List<UUID>> recentlyRegistered = new HashMap<>();
 
 
-    public static void populate(BiomeResourceKey biomeKey, Collection<UUID> playerUUIDs) {
+    public static void populate(ResourceKey biomeKey, Collection<UUID> playerUUIDs) {
         if (!recentlyRegistered.containsKey(biomeKey)) {
             recentlyRegistered.put(biomeKey, new ArrayList<>());
         }
         recentlyRegistered.get(biomeKey).addAll(playerUUIDs);
     }
 
-    public static boolean shouldPrevent(BiomeResourceKey biomeKey, Player player) {
-        if (!recentlyRegistered.containsKey(biomeKey) || !BiomeHandler.isBiome(biomeKey)) {
+    public static boolean shouldPrevent(ResourceKey biomeKey, Player player) {
+        if (!recentlyRegistered.containsKey(biomeKey) || !RegisteredBiomes.isRegistered(biomeKey)) {
             return false;
         }
         List<UUID> uuidList = recentlyRegistered.get(biomeKey);
@@ -43,7 +43,7 @@ public class BadRegistryPrevention implements Listener {
         UUID playerUUID = player.getUniqueId();
 
         for (var entry : recentlyRegistered.entrySet()) {
-            BiomeResourceKey biomeKey = entry.getKey();
+            ResourceKey biomeKey = entry.getKey();
             List<UUID> uuidList = entry.getValue();
             uuidList.remove(playerUUID);
 

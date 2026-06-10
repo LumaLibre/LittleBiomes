@@ -29,7 +29,7 @@ public class ReloadCommand implements Subcommand {
             } else {
                 okaeriLittleBiome.register();
                 okaeriLittleBiome.addToPacketHandler();
-                BadRegistryPrevention.populate(okaeriLittleBiome.biomeResourceKey(), playerUUIDs);
+                BadRegistryPrevention.populate(okaeriLittleBiome.ResourceKey(), playerUUIDs);
             }
         }
         TextUtil.msg(sender, "LittleBiomes configuration reloaded. Relogging is required to see biome changes.");

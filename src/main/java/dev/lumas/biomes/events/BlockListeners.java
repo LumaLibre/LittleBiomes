@@ -3,7 +3,7 @@ package dev.lumas.biomes.events;
 import com.google.common.base.Preconditions;
 import dev.lumas.biomes.util.Executors;
 import me.outspending.biomesapi.renderer.updater.BiomeUpdater;
-import me.outspending.biomesapi.registry.BiomeResourceKey;
+import me.outspending.biomesapi.keys.ResourceKey;
 import dev.lumas.biomes.LittleBiomes;
 import dev.lumas.biomes.model.CachedLittleBiomes;
 import dev.lumas.biomes.model.KeyedData;
@@ -109,14 +109,14 @@ public class BlockListeners implements Listener {
 
         SimpleBlockLocation simpleBlockLocation = SimpleBlockLocation.of(block.getWorld(), block.getX(), block.getY(), block.getZ());
 
-        String biomeResourceKeyString = Preconditions.checkNotNull(KeyedData.ANCHOR.get(itemStack), "Expected biome name in anchor item stack.");
-        BiomeResourceKey biomeResourceKey = BiomeResourceKey.fromString(biomeResourceKeyString);
+        String ResourceKeyString = Preconditions.checkNotNull(KeyedData.ANCHOR.get(itemStack), "Expected biome name in anchor item stack.");
+        ResourceKey resourceKey = ResourceKey.fromString(ResourceKeyString);
 
 
-        PlacedLittleBiome placedLittleBiome = new PlacedLittleBiome(simpleBlockLocation, biomeResourceKey);
+        PlacedLittleBiome placedLittleBiome = new PlacedLittleBiome(simpleBlockLocation, resourceKey);
         placedLittleBiome.onPlace(block);
         WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(block.getChunk());
-        CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation, biomeResourceKey);
+        CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation, resourceKey);
 
         int radius = LittleBiomes.okaeriConfig().anchorBiomeRadius();
         BIOME_UPDATER.updateChunkRadius(block.getChunk(), radius);
@@ -163,8 +163,8 @@ public class BlockListeners implements Listener {
 
 
         String biomeName = Preconditions.checkNotNull(KeyedData.CHUNK_BIOME.get(chunk), "Expected biome name for little biome in chunk (%d, %d) in world %s".formatted(block.getChunk().getX(), block.getChunk().getZ(), block.getWorld().getName()));
-        BiomeResourceKey biomeResourceKey = BiomeResourceKey.fromString(biomeName);
-        PlacedLittleBiome placedLittleBiome = new PlacedLittleBiome(anchorLocation, biomeResourceKey);
+        ResourceKey resourceKey = ResourceKey.fromString(biomeName);
+        PlacedLittleBiome placedLittleBiome = new PlacedLittleBiome(anchorLocation, resourceKey);
         placedLittleBiome.onRemove(block);
         CachedLittleBiomes.INSTANCE.uncacheChunk(worldTiedChunkLocation);
 

@@ -20,7 +20,7 @@ import dev.lumas.biomes.model.KeyedData;
 import dev.lumas.biomes.model.SimpleBlockLocation;
 import dev.lumas.biomes.model.WorldTiedChunkLocation;
 import dev.lumas.biomes.util.Executors;
-import me.outspending.biomesapi.registry.BiomeResourceKey;
+import me.outspending.biomesapi.keys.ResourceKey;
 import me.outspending.biomesapi.renderer.packet.PacketHandler;
 import me.outspending.biomesapi.wrapper.environment.GrassColorModifier;
 import me.outspending.biomesapi.wrapper.environment.particle.WrappedParticleTypes;
@@ -179,7 +179,7 @@ public final class LittleBiomes extends JavaPlugin {
                     chunk.getX(), chunk.getZ(), chunk.getWorld().getName()
             ));
 
-            BiomeResourceKey biomeKey = BiomeResourceKey.fromString(biomeKeyString);
+            ResourceKey biomeKey = ResourceKey.fromString(biomeKeyString);
             CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation, biomeKey);
             debug("Cached chunk at %s in world %s on startup.".formatted(
                     worldTiedChunkLocation.chunkX() + "," + worldTiedChunkLocation.chunkZ(),

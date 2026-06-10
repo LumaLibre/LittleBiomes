@@ -32,17 +32,17 @@ public enum SimpleParticleData {
     ;
 
     private final Class<?> contextType;
-    private final Class<? extends ParticleData<?>> particleDataClass;
+    private final Class<? extends ParticleData> particleDataClass;
     private final ParticleDataFactory<?, ?> factory;
 
-    <T, R extends ParticleData<?>> SimpleParticleData(Class<T> contextType, Class<R> particleDataClass, ParticleDataFactory<T, R> factory) {
+    <T, R extends ParticleData> SimpleParticleData(Class<T> contextType, Class<R> particleDataClass, ParticleDataFactory<T, R> factory) {
         this.contextType = contextType;
         this.particleDataClass = particleDataClass;
         this.factory = factory;
     }
 
 
-    public ParticleData<?> create(String context) {
+    public ParticleData create(String context) {
         Object parsedContext;
         if (contextType == Material.class) {
             parsedContext = Material.valueOf(context);
@@ -53,10 +53,10 @@ public enum SimpleParticleData {
         } else {
             throw new IllegalStateException("Unsupported context type: " + contextType);
         }
-        return ((ParticleDataFactory<Object, ParticleData<?>>) factory).create(parsedContext);
+        return ((ParticleDataFactory<Object, ParticleData>) factory).create(parsedContext);
     }
 
-    public static <R extends ParticleData<?>> SimpleParticleData fromParticleData(Class<R> particleDataClass) {
+    public static <R extends ParticleData> SimpleParticleData fromParticleData(Class<R> particleDataClass) {
         for (SimpleParticleData value : values()) {
             if (value.particleDataClass.equals(particleDataClass)) {
                 return value;
@@ -66,7 +66,7 @@ public enum SimpleParticleData {
     }
 
 
-    interface ParticleDataFactory<T, R extends ParticleData<?>> {
+    interface ParticleDataFactory<T, R extends ParticleData> {
         R create(T context);
     }
 }

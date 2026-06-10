@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import me.outspending.biomesapi.registry.BiomeResourceKey;
+import me.outspending.biomesapi.keys.ResourceKey;
 import dev.lumas.biomes.LittleBiomes;
 import dev.lumas.biomes.configuration.OkaeriLittleBiome;
 import org.bukkit.Chunk;
@@ -17,10 +17,10 @@ import org.bukkit.inventory.ItemStack;
 public class PlacedLittleBiome {
 
     private final SimpleBlockLocation anchor;
-    private final BiomeResourceKey biomeKey;
+    private final ResourceKey biomeKey;
 
 
-    public PlacedLittleBiome(SimpleBlockLocation anchor, BiomeResourceKey biomeKey) {
+    public PlacedLittleBiome(SimpleBlockLocation anchor, ResourceKey biomeKey) {
         this.anchor = anchor;
         this.biomeKey = biomeKey;
     }
@@ -86,7 +86,7 @@ public class PlacedLittleBiome {
                 chunk.getX(), chunk.getZ(), chunk.getWorld().getName()
         ));
 
-        BiomeResourceKey biomeKey = BiomeResourceKey.fromString(biomeKeyString);
+        ResourceKey biomeKey = ResourceKey.fromString(biomeKeyString);
 
         return new PlacedLittleBiome(anchorLocation, biomeKey);
     }
