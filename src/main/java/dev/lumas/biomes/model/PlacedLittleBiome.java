@@ -1,10 +1,10 @@
 package dev.lumas.biomes.model;
 
 import com.google.common.base.Preconditions;
+import dev.wyck.keys.ResourceKey;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import me.outspending.biomesapi.keys.ResourceKey;
 import dev.lumas.biomes.LittleBiomes;
 import dev.lumas.biomes.configuration.OkaeriLittleBiome;
 import org.bukkit.Chunk;

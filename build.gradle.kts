@@ -3,7 +3,6 @@ plugins {
     id("com.gradleup.shadow") version "9.3.0"
     id("io.freefair.lombok") version "9.1.0"
     id("xyz.jpenilla.run-paper") version "3.0.1"
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.19"
 }
 
 group = "dev.lumas.biomes"
@@ -13,14 +12,14 @@ repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://storehouse.okaeri.eu/repository/maven-public/")
-    maven("https://repo.jsinco.dev/releases")
+    maven("https://repo.wyck.dev/public/")
     maven("https://maven.enginehub.org/repo/")
 }
 
 dependencies {
-    paperweight.paperDevBundle("1.21.11-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
     implementation("eu.okaeri:okaeri-configs-yaml-bukkit:5.0.5")
-    implementation("me.outspending.biomesapi:BiomesAPI:2.3.0-c7b2122")
+    implementation("dev.wyck:Wyck:3.2.0")
 
     compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.9-beta1")
 
@@ -45,7 +44,7 @@ tasks {
     shadowJar {
         val shaded = "dev.lumas.biomes.shaded"
         relocate("eu.okaeri", "$shaded.okaeri")
-        relocate("me.outspending.biomesapi", "$shaded.biomesapi")
+        relocate("dev.wyck", "$shaded.biomesapi")
         archiveClassifier.set("")
     }
 

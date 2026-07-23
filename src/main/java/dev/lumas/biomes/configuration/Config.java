@@ -1,12 +1,12 @@
 package dev.lumas.biomes.configuration;
 
 import dev.lumas.biomes.enums.SimpleParticleData;
+import dev.wyck.environment.attribute.EnvironmentAttributes;
+import dev.wyck.environment.particle.ParticleTypes;
 import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.Comment;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import me.outspending.biomesapi.wrapper.environment.attribute.WrappedEnvironmentAttributes;
-import me.outspending.biomesapi.wrapper.environment.particle.WrappedParticleTypes;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.jetbrains.annotations.Nullable;
@@ -46,9 +46,9 @@ public class Config extends OkaeriConfig {
                     .anchorDisplayName("<blue><b>Basic Blue Biome Anchor")
                     .anchorLore(List.of("<gray>A simple little biome that is blue everywhere."))
                     .color("#6F8BEA")
-                    .ambientParticle(WrappedParticleTypes.END_ROD, 0.01f)
+                    .ambientParticle(ParticleTypes.END_ROD, 0.01f)
                     .blockReplacement(Material.BIRCH_LEAVES, Material.ACACIA_LEAVES)
-                    .environmentAttribute(WrappedEnvironmentAttributes.BLOCK_LIGHT_TINT, "#FF10F0")
+                    .environmentAttribute(EnvironmentAttributes.BLOCK_LIGHT_TINT, "#FF10F0")
                     .toOkaeriConfig(),
             OkaeriLittleBiome.basicBuilder()
                     .name("basic_green")
@@ -56,7 +56,7 @@ public class Config extends OkaeriConfig {
                     .anchorDisplayName("<green><b>Basic Green Biome Anchor")
                     .anchorLore(List.of("<gray>A simple little biome that is green everywhere."))
                     .color("#6FEA8B")
-                    .ambientParticle(WrappedParticleTypes.HAPPY_VILLAGER, 0.01f)
+                    .ambientParticle(ParticleTypes.HAPPY_VILLAGER, 0.01f)
                     .blockReplacement(Material.OAK_LEAVES, Material.JUNGLE_LEAVES)
                     .blockReplacement(Material.ICE, Material.GREEN_WOOL)
                     .toOkaeriConfig(),
@@ -72,7 +72,7 @@ public class Config extends OkaeriConfig {
                             "<gray>chunks to this biome!"
                     ))
                     .color("#C7B2F1")
-                    .ambientParticle(WrappedParticleTypes.DUST, 0.01f)
+                    .ambientParticle(ParticleTypes.DUST, 0.01f)
                     .ambientParticleData(SimpleParticleData.DUST, "#C7B2F1")
                     .toOkaeriConfig()
     );

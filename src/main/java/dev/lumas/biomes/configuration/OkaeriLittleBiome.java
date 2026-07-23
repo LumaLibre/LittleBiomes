@@ -2,31 +2,31 @@ package dev.lumas.biomes.configuration;
 
 import dev.lumas.biomes.enums.SimpleParticleData;
 import dev.lumas.biomes.model.WorldGuardHook;
+import dev.wyck.biome.CustomBiome;
+import dev.wyck.environment.GrassColorModifier;
+import dev.wyck.environment.attribute.EnvironmentAttribute;
+import dev.wyck.environment.attribute.EnvironmentAttributeMap;
+import dev.wyck.environment.attribute.EnvironmentAttributeSupplier;
+import dev.wyck.environment.attribute.EnvironmentAttributes;
+import dev.wyck.environment.attribute.FriendlyColorSupplier;
+import dev.wyck.environment.particle.ParticleCatalog;
+import dev.wyck.environment.particle.ParticleData;
+import dev.wyck.environment.particle.ParticleTypes;
+import dev.wyck.keys.KeyChains;
+import dev.wyck.keys.ResourceKey;
+import dev.wyck.renderer.packet.PacketHandler;
+import dev.wyck.renderer.packet.data.BlockReplacement;
+import dev.wyck.renderer.packet.data.VirtualBiome;
+import dev.wyck.util.internal.FriendlyColorUtil;
 import eu.okaeri.configs.OkaeriConfig;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import me.outspending.biomesapi.biome.CustomBiome;
-import me.outspending.biomesapi.biome.RegisteredBiomes;
-import me.outspending.biomesapi.keys.ResourceKey;
 import dev.lumas.biomes.LittleBiomes;
 import dev.lumas.biomes.events.BadRegistryPrevention;
 import dev.lumas.biomes.model.CachedLittleBiomes;
 import dev.lumas.biomes.model.KeyedData;
 import dev.lumas.biomes.model.WorldTiedChunkLocation;
 import dev.lumas.biomes.util.TextUtil;
-import me.outspending.biomesapi.renderer.packet.PacketHandler;
-import me.outspending.biomesapi.renderer.packet.data.BlockReplacement;
-import me.outspending.biomesapi.renderer.packet.data.PhonyCustomBiome;
-import me.outspending.biomesapi.wrapper.BiomeSettings;
-import me.outspending.biomesapi.wrapper.environment.GrassColorModifier;
-import me.outspending.biomesapi.wrapper.environment.attribute.IntColorSupplier;
-import me.outspending.biomesapi.wrapper.environment.attribute.WrappedEnvironmentAttribute;
-import me.outspending.biomesapi.wrapper.environment.attribute.WrappedEnvironmentAttributeMap;
-import me.outspending.biomesapi.wrapper.environment.attribute.WrappedEnvironmentAttributeSupplier;
-import me.outspending.biomesapi.wrapper.environment.attribute.WrappedEnvironmentAttributes;
-import me.outspending.biomesapi.wrapper.environment.particle.ParticleCatalog;
-import me.outspending.biomesapi.wrapper.environment.particle.ParticleData;
-import me.outspending.biomesapi.wrapper.environment.particle.WrappedParticleTypes;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
@@ -57,7 +57,7 @@ public class OkaeriLittleBiome extends OkaeriConfig {
     private String grassColor;
     private GrassColorModifier grassColorModifier;
     private PacketHandler.Priority biomePriority;
-    private Map<WrappedParticleTypes, Float> ambientParticles;
+    private Map<ParticleTypes, Float> ambientParticles;
     private Map<SimpleParticleData, String> ambientParticleData;
     private Map<Material, Material> blockReplacements;
     private Map<String, Object> environmentAttributes;
@@ -68,16 +68,16 @@ public class OkaeriLittleBiome extends OkaeriConfig {
     }
 
     public boolean isRegistered() {
-        return RegisteredBiomes.isRegistered(this.ResourceKey());
+        return KeyChains.biomes().isRegistered(this.ResourceKey());
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public CustomBiome customBiome() {
         ParticleCatalog particleCatalog = createParticleCatalog();
 
-        List<WrappedEnvironmentAttribute<?, ?>> wrappedEnvironmentAttributes = new ArrayList<>();
+        List<EnvironmentAttribute<?>> environmentAttributes = new ArrayList<>();
         for (var entry : (this.environmentAttributes != null ? this.environmentAttributes.entrySet() : new HashMap<String, Object>().entrySet())) {
-            WrappedEnvironmentAttributeSupplier supplier = WrappedEnvironmentAttributes.byId(entry.getKey());
+            EnvironmentAttributeSupplier supplier = EnvironmentAttributes.byId(entry.getKey());
             if (supplier == null) {
                 LittleBiomes.debug("Unknown environment attribute: " + entry.getKey());
                 continue;
@@ -86,19 +86,21 @@ public class OkaeriLittleBiome extends OkaeriConfig {
             Object value = entry.getValue();
 
             // IntColorSupplier accepts hex strings; convert before unboxing.
-            if (supplier instanceof IntColorSupplier && value instanceof String hex) {
-                value = IntColorSupplier.parseHex(hex);
+            if (supplier instanceof FriendlyColorSupplier && value instanceof String hex) {
+                value = FriendlyColorUtil.hexOrNull(hex);
             } else {
                 value = coerceNumber(value, supplier);
             }
 
-            WrappedEnvironmentAttribute attr = supplier.unbox(value);
-            wrappedEnvironmentAttributes.add(attr);
+            EnvironmentAttribute attr = supplier.unbox(value);
+            environmentAttributes.add(attr);
         }
+
+        EnvironmentAttributeMap environmentAttributeMap = EnvironmentAttributeMap.of(
+            environmentAttributes.toArray(new EnvironmentAttribute[0]));
 
         return CustomBiome.builder()
                 .resourceKey(this.ResourceKey())
-                .settings(BiomeSettings.defaultSettings())
                 .fogColor(fogColor)
                 .foliageColor(foliageColor)
                 .dryFoliageColor(foliageColor)
@@ -106,14 +108,12 @@ public class OkaeriLittleBiome extends OkaeriConfig {
                 .waterColor(waterColor)
                 .waterFogColor(waterFogColor)
                 .grassColor(grassColor)
-                .particleCatalog(particleCatalog)
                 .blockReplacements(
                         blockReplacements.entrySet().stream()
                                 .map(entry -> BlockReplacement.of(entry.getKey(), entry.getValue()))
                                 .toArray(BlockReplacement[]::new)
                 )
-                .setAttributes(WrappedEnvironmentAttributeMap.of(
-                        wrappedEnvironmentAttributes.toArray(new WrappedEnvironmentAttribute[0])))
+                .attributes(environmentAttributeMap.with(EnvironmentAttributes.AMBIENT_PARTICLES, particleCatalog))
                 .build();
     }
 
@@ -129,7 +129,7 @@ public class OkaeriLittleBiome extends OkaeriConfig {
     public void modify() {
         CustomBiome customBiome = customBiome();
 
-        CustomBiome registeredBiome = RegisteredBiomes.get(this.ResourceKey());
+        CustomBiome registeredBiome = (CustomBiome) KeyChains.biomes().get(this.ResourceKey());
         if (registeredBiome == null || customBiome.isSimilar(registeredBiome)) {
             LittleBiomes.debug("No modifications detected for biome: " + this.ResourceKey().toString());
             return;
@@ -141,24 +141,24 @@ public class OkaeriLittleBiome extends OkaeriConfig {
 
 
     public void addToPacketHandler() {
-        ResourceKey ResourceKey = this.ResourceKey();
+        ResourceKey resourceKey = this.ResourceKey();
         PacketHandler packetHandler = LittleBiomes.packetHandler();
 
-        if (packetHandler.hasBiome(ResourceKey)) {
-            LittleBiomes.debug("Packet handler already contains biome: " + ResourceKey);
+        if (packetHandler.hasBiome(resourceKey)) {
+            LittleBiomes.debug("Packet handler already contains biome: " + resourceKey);
             return;
         }
 
 
-        PhonyCustomBiome phonyCustomBiome = PhonyCustomBiome.builder()
-                .setCustomBiome(ResourceKey)
-                .setConditional((player, chunkLocation) -> {
-                    if (BadRegistryPrevention.shouldPrevent(ResourceKey, player)) {
+        VirtualBiome phonyCustomBiome = VirtualBiome.builder()
+                .biome(resourceKey)
+                .conditional((player, chunkLocation) -> {
+                    if (BadRegistryPrevention.shouldPrevent(resourceKey, player)) {
                         return false;
                     }
 
                     WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(player.getWorld(), chunkLocation);
-                    if (CachedLittleBiomes.INSTANCE.isChunkCached(worldTiedChunkLocation, ResourceKey) || CachedLittleBiomes.INSTANCE.isWithinRadiusOfCachedChunk(worldTiedChunkLocation, ResourceKey)) {
+                    if (CachedLittleBiomes.INSTANCE.isChunkCached(worldTiedChunkLocation, resourceKey) || CachedLittleBiomes.INSTANCE.isWithinRadiusOfCachedChunk(worldTiedChunkLocation, resourceKey)) {
                         return true;
                     }
 
@@ -168,7 +168,7 @@ public class OkaeriLittleBiome extends OkaeriConfig {
                     }
 
                     String worldguardRegionLittleBiomeName = worldGuardHook.getWorldGuardRegionLittleBiomeName(worldTiedChunkLocation);
-                    return ResourceKey.key().value().equalsIgnoreCase(worldguardRegionLittleBiomeName);
+                    return resourceKey.key().value().equalsIgnoreCase(worldguardRegionLittleBiomeName);
                 })
                 .build();
 
@@ -196,16 +196,16 @@ public class OkaeriLittleBiome extends OkaeriConfig {
     private ParticleCatalog createParticleCatalog() {
         ParticleCatalog.Builder particleCatalog = ParticleCatalog.builder();
         for (var entry : ambientParticles.entrySet()) {
-            WrappedParticleTypes wrappedType = entry.getKey();
+            ParticleTypes wrappedType = entry.getKey();
             float probability = entry.getValue();
             if (wrappedType.isSimple()) {
-                particleCatalog.addSimple(wrappedType, probability);
+                particleCatalog.simple(wrappedType, probability);
             } else {
                 SimpleParticleData simpleParticleData = SimpleParticleData.fromParticleData(wrappedType.getParticleDataClass());
                 String context = ambientParticleData.get(simpleParticleData);
                 ParticleData converted = simpleParticleData.create(context);
 
-                particleCatalog.addComplex(wrappedType, probability, converted);
+                particleCatalog.complex(wrappedType, probability, converted);
             }
         }
         return particleCatalog.build();
@@ -217,9 +217,9 @@ public class OkaeriLittleBiome extends OkaeriConfig {
      * SnakeYAML parses 0.5 as Double, but Float attributes need Float — this bridges that gap.
      * Returns the value unchanged if it's not a Number or already matches.
      */
-    private static Object coerceNumber(Object value, WrappedEnvironmentAttributeSupplier<?, ?> supplier) {
+    private static Object coerceNumber(Object value, EnvironmentAttributeSupplier<?> supplier) {
         if (!(value instanceof Number n)) return value;
-        Object def = supplier.get().getAttribute().defaultValue();
+        Object def = supplier.get().defaultValue();
         Class<?> expected = def.getClass();
         if (expected.isInstance(value)) return value;
         if (expected == Integer.class) return n.intValue();
@@ -241,7 +241,7 @@ public class OkaeriLittleBiome extends OkaeriConfig {
         private List<String> anchorLore;
         private String color;
         private GrassColorModifier grassColorModifier = GrassColorModifier.NONE;
-        private Map<WrappedParticleTypes, Float> ambientParticles = new HashMap<>();
+        private Map<ParticleTypes, Float> ambientParticles = new HashMap<>();
         private Map<SimpleParticleData, String> ambientParticleData = new HashMap<>();
         private Map<Material, Material> blockReplacements = new HashMap<>();
         private Map<String, Object> environmentAttributes = new HashMap<>();
@@ -272,7 +272,7 @@ public class OkaeriLittleBiome extends OkaeriConfig {
             return this;
         }
 
-        public BasicBuilder ambientParticle(WrappedParticleTypes particle, float probability) {
+        public BasicBuilder ambientParticle(ParticleTypes particle, float probability) {
             this.ambientParticles.put(particle, probability);
             return this;
         }
@@ -287,8 +287,8 @@ public class OkaeriLittleBiome extends OkaeriConfig {
             return this;
         }
 
-        public BasicBuilder environmentAttribute(WrappedEnvironmentAttributeSupplier<?, ?> attribute, Object value) {
-            this.environmentAttributes.put(attribute.get().getAttribute().key(), value);
+        public BasicBuilder environmentAttribute(EnvironmentAttributeSupplier<?> attribute, Object value) {
+            this.environmentAttributes.put(attribute.get().key().path(), value);
             return this;
         }
 

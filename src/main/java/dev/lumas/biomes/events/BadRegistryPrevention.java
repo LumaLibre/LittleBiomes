@@ -1,7 +1,7 @@
 package dev.lumas.biomes.events;
 
-import me.outspending.biomesapi.biome.RegisteredBiomes;
-import me.outspending.biomesapi.keys.ResourceKey;
+import dev.wyck.keys.KeyChains;
+import dev.wyck.keys.ResourceKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -29,7 +29,7 @@ public class BadRegistryPrevention implements Listener {
     }
 
     public static boolean shouldPrevent(ResourceKey biomeKey, Player player) {
-        if (!recentlyRegistered.containsKey(biomeKey) || !RegisteredBiomes.isRegistered(biomeKey)) {
+        if (!recentlyRegistered.containsKey(biomeKey) || !KeyChains.biomes().isRegistered(biomeKey)) {
             return false;
         }
         List<UUID> uuidList = recentlyRegistered.get(biomeKey);

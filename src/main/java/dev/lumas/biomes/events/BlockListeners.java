@@ -2,14 +2,14 @@ package dev.lumas.biomes.events;
 
 import com.google.common.base.Preconditions;
 import dev.lumas.biomes.util.Executors;
-import me.outspending.biomesapi.renderer.updater.BiomeUpdater;
-import me.outspending.biomesapi.keys.ResourceKey;
 import dev.lumas.biomes.LittleBiomes;
 import dev.lumas.biomes.model.CachedLittleBiomes;
 import dev.lumas.biomes.model.KeyedData;
 import dev.lumas.biomes.model.PlacedLittleBiome;
 import dev.lumas.biomes.model.SimpleBlockLocation;
 import dev.lumas.biomes.model.WorldTiedChunkLocation;
+import dev.wyck.keys.ResourceKey;
+import dev.wyck.renderer.updater.BiomeUpdater;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Chunk;

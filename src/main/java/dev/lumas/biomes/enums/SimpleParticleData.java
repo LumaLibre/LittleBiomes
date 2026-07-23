@@ -1,14 +1,14 @@
 package dev.lumas.biomes.enums;
 
-import me.outspending.biomesapi.wrapper.environment.particle.ParticleData;
-import me.outspending.biomesapi.wrapper.environment.particle.options.BlockParticle;
-import me.outspending.biomesapi.wrapper.environment.particle.options.ColorParticle;
-import me.outspending.biomesapi.wrapper.environment.particle.options.DustParticle;
-import me.outspending.biomesapi.wrapper.environment.particle.options.DustTransitionParticle;
-import me.outspending.biomesapi.wrapper.environment.particle.options.ItemParticle;
-import me.outspending.biomesapi.wrapper.environment.particle.options.PowerParticle;
-import me.outspending.biomesapi.wrapper.environment.particle.options.SculkChargeParticle;
-import me.outspending.biomesapi.wrapper.environment.particle.options.SpellParticle;
+import dev.wyck.environment.particle.ParticleData;
+import dev.wyck.environment.particle.options.BlockParticle;
+import dev.wyck.environment.particle.options.ColorParticle;
+import dev.wyck.environment.particle.options.DustParticle;
+import dev.wyck.environment.particle.options.DustTransitionParticle;
+import dev.wyck.environment.particle.options.ItemParticle;
+import dev.wyck.environment.particle.options.PowerParticle;
+import dev.wyck.environment.particle.options.SculkChargeParticle;
+import dev.wyck.environment.particle.options.SpellParticle;
 import org.bukkit.Material;
 
 public enum SimpleParticleData {

@@ -1,7 +1,7 @@
 package dev.lumas.biomes.model;
 
-import me.outspending.biomesapi.keys.ResourceKey;
 import dev.lumas.biomes.LittleBiomes;
+import dev.wyck.keys.ResourceKey;
 
 import java.util.Map;
 import java.util.Set;
