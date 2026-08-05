@@ -54,6 +54,7 @@ public class OkaeriLittleBiome extends OkaeriConfig {
     private String waterFogColor;
     private String skyColor;
     private String foliageColor;
+    private String dryFoliageColor;
     private String grassColor;
     private GrassColorModifier grassColorModifier;
     private PacketHandler.Priority biomePriority;
@@ -99,11 +100,13 @@ public class OkaeriLittleBiome extends OkaeriConfig {
         EnvironmentAttributeMap environmentAttributeMap = EnvironmentAttributeMap.of(
             environmentAttributes.toArray(new EnvironmentAttribute[0]));
 
+        String dryFoliageColor = this.dryFoliageColor != null ? this.dryFoliageColor : this.foliageColor;
+
         return CustomBiome.builder()
                 .resourceKey(this.ResourceKey())
                 .fogColor(fogColor)
                 .foliageColor(foliageColor)
-                .dryFoliageColor(foliageColor)
+                .dryFoliageColor(dryFoliageColor)
                 .skyColor(skyColor)
                 .waterColor(waterColor)
                 .waterFogColor(waterFogColor)
