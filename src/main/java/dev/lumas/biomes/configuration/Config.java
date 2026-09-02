@@ -24,8 +24,8 @@ public class Config extends OkaeriConfig {
     @Comment("Materials that should be checked for BlockPhysicsEvent.")
     private Set<Material> checkBlockPhysAnchorMaterials = Set.of(Material.ANVIL);
 
-    @Comment("Radius (in chunks) around an anchor to apply little biome effects.")
-    private int anchorBiomeRadius = 4;
+    @Comment("Radius (in blocks) around an anchor to apply little biome effects. The region is a circle.")
+    private int anchorBiomeRadiusBlocks = 64;
 
     @Comment("Particle effect to display around little biome anchors.")
     private Particle anchorParticle = Particle.WITCH;
@@ -77,6 +77,15 @@ public class Config extends OkaeriConfig {
                     .toOkaeriConfig()
     );
 
+
+
+    /**
+     * The anchor radius expressed in chunks, rounded up. Used when refreshing chunks around an
+     * anchor -- it has to cover every chunk the circle can touch, so it errs on the wide side.
+     */
+    public int anchorBiomeChunkRadius() {
+        return (anchorBiomeRadiusBlocks >> 4) + 1;
+    }
 
 
     @Nullable

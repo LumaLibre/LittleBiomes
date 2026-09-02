@@ -179,8 +179,13 @@ public final class LittleBiomes extends JavaPlugin {
                     chunk.getX(), chunk.getZ(), chunk.getWorld().getName()
             ));
 
+            String serializedAnchor = Preconditions.checkNotNull(KeyedData.ANCHOR_BLOCK.get(chunk), "Expected to find anchor data for little biome in chunk (%d, %d) in world %s".formatted(
+                    chunk.getX(), chunk.getZ(), chunk.getWorld().getName()
+            ));
+
             ResourceKey biomeKey = ResourceKey.fromString(biomeKeyString);
-            CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation, biomeKey);
+            SimpleBlockLocation anchorLocation = SimpleBlockLocation.fromSerialized(serializedAnchor, chunk.getWorld());
+            CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation, biomeKey, anchorLocation);
             debug("Cached chunk at %s in world %s on startup.".formatted(
                     worldTiedChunkLocation.chunkX() + "," + worldTiedChunkLocation.chunkZ(),
                     worldTiedChunkLocation.world().getName()

@@ -73,7 +73,7 @@ public class BlockListeners implements Listener {
         placedLittleBiome.onRemove(block);
         CachedLittleBiomes.INSTANCE.uncacheChunk(worldTiedChunkLocation);
 
-        int radius = LittleBiomes.okaeriConfig().anchorBiomeRadius();
+        int radius = LittleBiomes.okaeriConfig().anchorBiomeChunkRadius();
         BIOME_UPDATER.updateChunkRadius(chunk, radius);
 
         if (player.getGameMode() != GameMode.CREATIVE) {
@@ -116,9 +116,9 @@ public class BlockListeners implements Listener {
         PlacedLittleBiome placedLittleBiome = new PlacedLittleBiome(simpleBlockLocation, resourceKey);
         placedLittleBiome.onPlace(block);
         WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(block.getChunk());
-        CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation, resourceKey);
+        CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation, resourceKey, simpleBlockLocation);
 
-        int radius = LittleBiomes.okaeriConfig().anchorBiomeRadius();
+        int radius = LittleBiomes.okaeriConfig().anchorBiomeChunkRadius();
         BIOME_UPDATER.updateChunkRadius(block.getChunk(), radius);
     }
 
@@ -175,7 +175,7 @@ public class BlockListeners implements Listener {
         event.setCancelled(true); // Prevent physics updates on the anchor block
 
 
-        int radius = LittleBiomes.okaeriConfig().anchorBiomeRadius();
+        int radius = LittleBiomes.okaeriConfig().anchorBiomeChunkRadius();
         BIOME_UPDATER.updateChunkRadius(chunk, radius);
     }
 

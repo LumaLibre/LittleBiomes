@@ -161,22 +161,29 @@ public class OkaeriLittleBiome extends OkaeriConfig {
                     }
 
                     WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(player.getWorld(), chunkLocation);
-                    if (CachedLittleBiomes.INSTANCE.isChunkCached(worldTiedChunkLocation, resourceKey) || CachedLittleBiomes.INSTANCE.isWithinRadiusOfCachedChunk(worldTiedChunkLocation, resourceKey)) {
-                        return true;
-                    }
+                    return CachedLittleBiomes.INSTANCE.isChunkWithinAnchorRadius(worldTiedChunkLocation, resourceKey)
+                            || matchesWorldGuardRegion(worldTiedChunkLocation, resourceKey);
+                })
 
-                    WorldGuardHook worldGuardHook = LittleBiomes.worldGuardHook();
-                    if (worldGuardHook == null) {
-                        return false;
-                    }
-
-                    String worldguardRegionLittleBiomeName = worldGuardHook.getWorldGuardRegionLittleBiomeName(worldTiedChunkLocation);
-                    return resourceKey.key().value().equalsIgnoreCase(worldguardRegionLittleBiomeName);
+                .positionCondition((player, position) -> {
+                    WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(player.getWorld(), position.chunkLocation());
+                    return CachedLittleBiomes.INSTANCE.isCellWithinAnchorRadius(worldTiedChunkLocation, resourceKey, position)
+                            || matchesWorldGuardRegion(worldTiedChunkLocation, resourceKey);
                 })
                 .build();
 
         packetHandler.appendBiome(phonyCustomBiome);
         LittleBiomes.debug("Added biome to packet handler: " + this.ResourceKey().toString());
+    }
+
+
+    private static boolean matchesWorldGuardRegion(WorldTiedChunkLocation chunk, ResourceKey resourceKey) {
+        WorldGuardHook worldGuardHook = LittleBiomes.worldGuardHook();
+        if (worldGuardHook == null) {
+            return false;
+        }
+
+        return resourceKey.key().value().equalsIgnoreCase(worldGuardHook.getWorldGuardRegionLittleBiomeName(chunk));
     }
 
 

@@ -5,6 +5,7 @@ import dev.lumas.biomes.commands.Subcommand;
 import dev.lumas.biomes.configuration.Config;
 import dev.lumas.biomes.configuration.OkaeriLittleBiome;
 import dev.lumas.biomes.events.BadRegistryPrevention;
+import dev.lumas.biomes.model.CachedLittleBiomes;
 import dev.lumas.biomes.util.TextUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -18,6 +19,7 @@ public class ReloadCommand implements Subcommand {
     public boolean execute(CommandSender sender, String label, List<String> args) {
         Config config = LittleBiomes.okaeriConfig();
         config.load(true);
+        CachedLittleBiomes.INSTANCE.invalidateAnchorLookups(); // the radius may have changed
 
         List<UUID> playerUUIDs = Bukkit.getOnlinePlayers().stream()
                 .map(Entity::getUniqueId)

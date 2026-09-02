@@ -3,6 +3,7 @@ package dev.lumas.biomes.events;
 import com.google.common.base.Preconditions;
 import dev.lumas.biomes.model.CachedLittleBiomes;
 import dev.lumas.biomes.model.KeyedData;
+import dev.lumas.biomes.model.SimpleBlockLocation;
 import dev.lumas.biomes.model.WorldTiedChunkLocation;
 import dev.wyck.keys.ResourceKey;
 import org.bukkit.Chunk;
@@ -28,10 +29,14 @@ public class ChunkListeners implements Listener {
             String biomeKeyString = Preconditions.checkNotNull(KeyedData.CHUNK_BIOME.get(chunk), "Expected to find biome key for chunk (%d, %d) in world %s".formatted(
                     chunk.getX(), chunk.getZ(), chunk.getWorld().getName()
             ));
+            String serializedAnchor = Preconditions.checkNotNull(KeyedData.ANCHOR_BLOCK.get(chunk), "Expected to find anchor data for little biome in chunk (%d, %d) in world %s".formatted(
+                    chunk.getX(), chunk.getZ(), chunk.getWorld().getName()
+            ));
 
 
             ResourceKey biomeKey = ResourceKey.fromString(biomeKeyString);
-            CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation, biomeKey);
+            SimpleBlockLocation anchorLocation = SimpleBlockLocation.fromSerialized(serializedAnchor, chunk.getWorld());
+            CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation, biomeKey, anchorLocation);
         });
     }
 
