@@ -19,7 +19,7 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
     implementation("eu.okaeri:okaeri-configs-yaml-bukkit:5.0.5")
-    implementation("dev.wyck:wyck:3.3.0-4e557c5")
+    implementation("dev.wyck:wyck:3.3.0")
 
     compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.9-beta1")
 
@@ -49,9 +49,9 @@ tasks {
     }
 
     runServer {
-        minecraftVersion("26.1.2")
+        minecraftVersion("26.2")
         downloadPlugins {
-            modrinth("plugmanx", "3.0.2")
+            modrinth("plugmanx", "3.1.0-Beta.2")
         }
     }
 
