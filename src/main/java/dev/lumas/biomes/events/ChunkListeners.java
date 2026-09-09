@@ -10,7 +10,6 @@ import org.bukkit.Chunk;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
-import org.bukkit.event.world.ChunkUnloadEvent;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -37,20 +36,6 @@ public class ChunkListeners implements Listener {
             ResourceKey biomeKey = ResourceKey.fromString(biomeKeyString);
             SimpleBlockLocation anchorLocation = SimpleBlockLocation.fromSerialized(serializedAnchor, chunk.getWorld());
             CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation, biomeKey, anchorLocation);
-        });
-    }
-
-    @EventHandler
-    public void onChunkUnloadEvent(ChunkUnloadEvent event) {
-        Chunk chunk = event.getChunk();
-
-        CompletableFuture.runAsync(() -> {
-            if (!KeyedData.CHUNK_BIOME.matches(chunk)) {
-                return;
-            }
-
-            WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(chunk);
-            CachedLittleBiomes.INSTANCE.uncacheChunk(worldTiedChunkLocation);
         });
     }
 }

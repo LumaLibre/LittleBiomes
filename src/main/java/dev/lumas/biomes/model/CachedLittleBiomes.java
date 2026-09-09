@@ -7,7 +7,10 @@ import dev.lumas.biomes.LittleBiomes;
 import dev.wyck.keys.ResourceKey;
 import dev.wyck.misc.BiomePosition;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,6 +26,8 @@ public final class CachedLittleBiomes {
             .maximumSize(4096)
             .build(CacheLoader.from(this::findAnchorsOverlapping));
 
+    private static final ThreadLocal<RenderingChunk> RENDERING = ThreadLocal.withInitial(RenderingChunk::new);
+
     public boolean isChunkCached(WorldTiedChunkLocation location) {
         return cachedChunkLocations.containsKey(location);
     }
@@ -33,11 +38,16 @@ public final class CachedLittleBiomes {
     }
 
     public boolean isChunkWithinAnchorRadius(WorldTiedChunkLocation chunk, ResourceKey biomeKey) {
-        return !anchorsOverlapping(chunk, biomeKey).isEmpty();
+        List<SimpleBlockLocation> anchors = anchorsOverlapping(chunk, biomeKey);
+        RENDERING.get().remember(chunk, biomeKey, anchors);
+        return !anchors.isEmpty();
     }
 
     public boolean isCellWithinAnchorRadius(WorldTiedChunkLocation chunk, ResourceKey biomeKey, BiomePosition position) {
-        List<SimpleBlockLocation> anchors = anchorsOverlapping(chunk, biomeKey);
+        List<SimpleBlockLocation> anchors = RENDERING.get().recall(chunk, biomeKey);
+        if (anchors == null) {
+            anchors = anchorsOverlapping(chunk, biomeKey); // no chunk gate ran on this thread
+        }
         if (anchors.isEmpty()) {
             return false;
         }
@@ -58,13 +68,20 @@ public final class CachedLittleBiomes {
     }
 
     public void cacheChunk(WorldTiedChunkLocation location, ResourceKey biomeKey, SimpleBlockLocation anchor) {
-        cachedChunkLocations.put(location, new CachedAnchor(biomeKey, anchor));
+        CachedAnchor cachedAnchor = new CachedAnchor(biomeKey, anchor);
+        if (cachedAnchor.equals(cachedChunkLocations.put(location, cachedAnchor))) {
+            return; // re-reported on chunk load; the lookups are still good
+        }
+
         anchorsByChunk.invalidateAll();
         LittleBiomes.debug("Cached new chunk, size: %d".formatted(cachedChunkLocations.size()));
     }
 
     public void uncacheChunk(WorldTiedChunkLocation location) {
-        cachedChunkLocations.remove(location);
+        if (cachedChunkLocations.remove(location) == null) {
+            return;
+        }
+
         anchorsByChunk.invalidateAll();
         LittleBiomes.debug("Uncached chunk, size: %d".formatted(cachedChunkLocations.size()));
     }
@@ -124,6 +141,30 @@ public final class CachedLittleBiomes {
 
     private static long clamp(long value, long min, long max) {
         return Math.max(min, Math.min(max, value));
+    }
+
+
+    /**
+     * One thread's view of the chunk it is rendering. Written by the chunk-level gate, read by
+     * every cell of that chunk, and reset as soon as the gate runs for a different chunk.
+     */
+    private static final class RenderingChunk {
+
+        private @Nullable WorldTiedChunkLocation chunk;
+        private final Map<ResourceKey, List<SimpleBlockLocation>> anchorsByBiome = new HashMap<>();
+
+        void remember(WorldTiedChunkLocation chunk, ResourceKey biomeKey, List<SimpleBlockLocation> anchors) {
+            if (!chunk.equals(this.chunk)) {
+                this.chunk = chunk;
+                this.anchorsByBiome.clear();
+            }
+            this.anchorsByBiome.put(biomeKey, anchors);
+        }
+
+        @Nullable
+        List<SimpleBlockLocation> recall(WorldTiedChunkLocation chunk, ResourceKey biomeKey) {
+            return chunk.equals(this.chunk) ? this.anchorsByBiome.get(biomeKey) : null;
+        }
     }
 
 

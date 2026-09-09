@@ -123,22 +123,24 @@ public final class LittleBiomes extends JavaPlugin {
     private void anchorParticlesTask() {
         Executors.runRepeatingAsync(1, TimeUnit.SECONDS, task -> {
             for (WorldTiedChunkLocation worldTiedChunkLocation : CachedLittleBiomes.INSTANCE.getCachedChunks()) {
+                if (!worldTiedChunkLocation.world().isChunkLoaded(worldTiedChunkLocation.chunkX(), worldTiedChunkLocation.chunkZ())) {
+                    continue;
+                }
+
                 worldTiedChunkLocation.toBukkitChunk().thenAccept(chunk -> {
                     Executors.sync(chunk, () -> {
                         if (!chunk.isLoaded()) {
-                            Executors.sync(chunk, () -> {
-                                CachedLittleBiomes.INSTANCE.uncacheChunk(worldTiedChunkLocation);
-                                debug("Uncached chunk at %s in world %s because it was unloaded?".formatted(
-                                        worldTiedChunkLocation.chunkX() + "," + worldTiedChunkLocation.chunkZ(),
-                                        worldTiedChunkLocation.world().getName()
-                                ));
-                            });
                             return;
                         }
 
                         @Nullable String serializedAnchorLocation = KeyedData.ANCHOR_BLOCK.get(chunk);
                         if (serializedAnchorLocation == null) {
-                            return; // Could have been removed.
+                            CachedLittleBiomes.INSTANCE.uncacheChunk(worldTiedChunkLocation);
+                            debug("Uncached chunk at %s in world %s because its anchor is gone, probably.".formatted(
+                                    worldTiedChunkLocation.chunkX() + "," + worldTiedChunkLocation.chunkZ(),
+                                    worldTiedChunkLocation.world().getName()
+                            ));
+                            return;
                         }
 
                         SimpleBlockLocation anchorLocation = SimpleBlockLocation.fromSerialized(serializedAnchorLocation, chunk.getWorld());
