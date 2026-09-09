@@ -20,11 +20,14 @@ public final class CachedLittleBiomes {
 
     public static CachedLittleBiomes INSTANCE = new CachedLittleBiomes();
 
+    private static final int FIRST_CELL_CENTRE = 3;
+    private static final int LAST_CELL_CENTRE = 27;
+
     private final Map<WorldTiedChunkLocation, CachedAnchor> cachedChunkLocations = new ConcurrentHashMap<>();
 
-    private final LoadingCache<AnchorQuery, List<SimpleBlockLocation>> anchorsByChunk = CacheBuilder.newBuilder()
+    private final LoadingCache<AnchorQuery, ChunkCoverage> coverageByChunk = CacheBuilder.newBuilder()
             .maximumSize(4096)
-            .build(CacheLoader.from(this::findAnchorsOverlapping));
+            .build(CacheLoader.from(this::computeCoverage));
 
     private static final ThreadLocal<RenderingChunk> RENDERING = ThreadLocal.withInitial(RenderingChunk::new);
 
@@ -37,17 +40,24 @@ public final class CachedLittleBiomes {
         return cachedAnchor != null && cachedAnchor.biomeKey().equals(biomeKey);
     }
 
-    public boolean isChunkWithinAnchorRadius(WorldTiedChunkLocation chunk, ResourceKey biomeKey) {
-        List<SimpleBlockLocation> anchors = anchorsOverlapping(chunk, biomeKey);
-        RENDERING.get().remember(chunk, biomeKey, anchors);
-        return !anchors.isEmpty();
+    public boolean chunkMatches(WorldTiedChunkLocation chunk, ResourceKey biomeKey) {
+        ChunkCoverage coverage = coverageOf(chunk, biomeKey);
+        boolean regionMatch = matchesWorldGuardRegion(chunk, biomeKey);
+        RENDERING.get().remember(chunk, biomeKey, coverage, regionMatch);
+        return regionMatch || !coverage.anchors().isEmpty();
     }
 
-    public boolean isCellWithinAnchorRadius(WorldTiedChunkLocation chunk, ResourceKey biomeKey, BiomePosition position) {
-        List<SimpleBlockLocation> anchors = RENDERING.get().recall(chunk, biomeKey);
-        if (anchors == null) {
-            anchors = anchorsOverlapping(chunk, biomeKey); // no chunk gate ran on this thread
+    public boolean cellMatches(WorldTiedChunkLocation chunk, ResourceKey biomeKey, BiomePosition position) {
+        RenderedChunkState state = RENDERING.get().recall(chunk, biomeKey);
+        if (state == null) {
+            state = new RenderedChunkState(coverageOf(chunk, biomeKey), matchesWorldGuardRegion(chunk, biomeKey)); // no chunk gate ran on this thread
         }
+
+        ChunkCoverage coverage = state.coverage();
+        if (state.regionMatch() || coverage.fullyCovered()) {
+            return true;
+        }
+        List<SimpleBlockLocation> anchors = coverage.anchors();
         if (anchors.isEmpty()) {
             return false;
         }
@@ -73,7 +83,7 @@ public final class CachedLittleBiomes {
             return; // re-reported on chunk load; the lookups are still good
         }
 
-        anchorsByChunk.invalidateAll();
+        coverageByChunk.invalidateAll();
         LittleBiomes.debug("Cached new chunk, size: %d".formatted(cachedChunkLocations.size()));
     }
 
@@ -82,34 +92,36 @@ public final class CachedLittleBiomes {
             return;
         }
 
-        anchorsByChunk.invalidateAll();
+        coverageByChunk.invalidateAll();
         LittleBiomes.debug("Uncached chunk, size: %d".formatted(cachedChunkLocations.size()));
     }
 
     /**
-     * Drops the memoized per-chunk anchor lists. Needed after a config reload, since they are
-     * computed against the configured radius.
+     * Drops the memoized per-chunk coverage. Needed after a config reload, since it is computed
+     * against the configured radius.
      */
     public void invalidateAnchorLookups() {
-        anchorsByChunk.invalidateAll();
+        coverageByChunk.invalidateAll();
     }
 
     public Set<WorldTiedChunkLocation> getCachedChunks() {
         return cachedChunkLocations.keySet();
     }
 
-    private List<SimpleBlockLocation> anchorsOverlapping(WorldTiedChunkLocation chunk, ResourceKey biomeKey) {
-        return anchorsByChunk.getUnchecked(new AnchorQuery(chunk, biomeKey));
+    private ChunkCoverage coverageOf(WorldTiedChunkLocation chunk, ResourceKey biomeKey) {
+        return coverageByChunk.getUnchecked(new AnchorQuery(chunk, biomeKey));
     }
 
-    private List<SimpleBlockLocation> findAnchorsOverlapping(AnchorQuery query) {
+    private ChunkCoverage computeCoverage(AnchorQuery query) {
         WorldTiedChunkLocation chunk = query.chunk();
 
         long minX = (long) chunk.chunkX() << 5;
         long minZ = (long) chunk.chunkZ() << 5;
         long radius = radiusInHalfBlocks();
+        long radiusSquared = radius * radius;
 
         List<SimpleBlockLocation> anchors = new ArrayList<>();
+        boolean fullyCovered = false;
         for (var entry : cachedChunkLocations.entrySet()) {
             CachedAnchor cachedAnchor = entry.getValue();
             if (!cachedAnchor.biomeKey().equals(query.biomeKey()) || !entry.getKey().world().equals(chunk.world())) {
@@ -121,14 +133,35 @@ public final class CachedLittleBiomes {
             long anchorZ = anchorCentre(anchor.z());
 
             // distance from the anchor to the nearest point of this chunk
-            long dx = anchorX - clamp(anchorX, minX, minX + 32);
-            long dz = anchorZ - clamp(anchorZ, minZ, minZ + 32);
+            long nearX = anchorX - clamp(anchorX, minX, minX + 32);
+            long nearZ = anchorZ - clamp(anchorZ, minZ, minZ + 32);
+            if (nearX * nearX + nearZ * nearZ > radiusSquared) {
+                continue;
+            }
+            anchors.add(anchor);
 
-            if (dx * dx + dz * dz <= radius * radius) {
-                anchors.add(anchor);
+            long farX = furthestCellCentreDistance(anchorX, minX);
+            long farZ = furthestCellCentreDistance(anchorZ, minZ);
+            if (farX * farX + farZ * farZ <= radiusSquared) {
+                fullyCovered = true;
             }
         }
-        return List.copyOf(anchors);
+        return new ChunkCoverage(List.copyOf(anchors), fullyCovered);
+    }
+
+    private static long furthestCellCentreDistance(long anchorCoordinate, long chunkMin) {
+        long low = Math.abs(anchorCoordinate - (chunkMin + FIRST_CELL_CENTRE));
+        long high = Math.abs(anchorCoordinate - (chunkMin + LAST_CELL_CENTRE));
+        return Math.max(low, high);
+    }
+
+    private static boolean matchesWorldGuardRegion(WorldTiedChunkLocation chunk, ResourceKey biomeKey) {
+        WorldGuardHook worldGuardHook = LittleBiomes.worldGuardHook();
+        if (worldGuardHook == null) {
+            return false;
+        }
+
+        return biomeKey.key().value().equalsIgnoreCase(worldGuardHook.getWorldGuardRegionLittleBiomeName(chunk));
     }
 
     private static long radiusInHalfBlocks() {
@@ -151,22 +184,26 @@ public final class CachedLittleBiomes {
     private static final class RenderingChunk {
 
         private @Nullable WorldTiedChunkLocation chunk;
-        private final Map<ResourceKey, List<SimpleBlockLocation>> anchorsByBiome = new HashMap<>();
+        private final Map<ResourceKey, RenderedChunkState> stateByBiome = new HashMap<>();
 
-        void remember(WorldTiedChunkLocation chunk, ResourceKey biomeKey, List<SimpleBlockLocation> anchors) {
+        void remember(WorldTiedChunkLocation chunk, ResourceKey biomeKey, ChunkCoverage coverage, boolean regionMatch) {
             if (!chunk.equals(this.chunk)) {
                 this.chunk = chunk;
-                this.anchorsByBiome.clear();
+                this.stateByBiome.clear();
             }
-            this.anchorsByBiome.put(biomeKey, anchors);
+            this.stateByBiome.put(biomeKey, new RenderedChunkState(coverage, regionMatch));
         }
 
         @Nullable
-        List<SimpleBlockLocation> recall(WorldTiedChunkLocation chunk, ResourceKey biomeKey) {
-            return chunk.equals(this.chunk) ? this.anchorsByBiome.get(biomeKey) : null;
+        RenderedChunkState recall(WorldTiedChunkLocation chunk, ResourceKey biomeKey) {
+            return chunk.equals(this.chunk) ? this.stateByBiome.get(biomeKey) : null;
         }
     }
 
+
+    public record ChunkCoverage(List<SimpleBlockLocation> anchors, boolean fullyCovered) { }
+
+    private record RenderedChunkState(ChunkCoverage coverage, boolean regionMatch) { }
 
     public record CachedAnchor(ResourceKey biomeKey, SimpleBlockLocation anchor) { }
 

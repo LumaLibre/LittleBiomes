@@ -37,7 +37,7 @@ public final class Executors {
     }
 
     public static ScheduledTask sync(Chunk chunk, Runnable runnable) {
-        return Bukkit.getRegionScheduler().run(PLUGIN, chunk.getWorld(), chunk.getX() >> 4, chunk.getZ() >> 4, (task) -> {
+        return Bukkit.getRegionScheduler().run(PLUGIN, chunk.getWorld(), chunk.getX(), chunk.getZ(), (task) -> {
             try {
                 runnable.run();
             } catch (Throwable t) {

@@ -7,49 +7,41 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class BadRegistryPrevention implements Listener {
 
     // lazy disconnect prevention when admins reload
 
-    private static final Map<ResourceKey, List<UUID>> recentlyRegistered = new HashMap<>();
+    private static final Map<ResourceKey, Set<UUID>> recentlyRegistered = new ConcurrentHashMap<>();
 
 
     public static void populate(ResourceKey biomeKey, Collection<UUID> playerUUIDs) {
-        if (!recentlyRegistered.containsKey(biomeKey)) {
-            recentlyRegistered.put(biomeKey, new ArrayList<>());
-        }
-        recentlyRegistered.get(biomeKey).addAll(playerUUIDs);
+        recentlyRegistered
+                .computeIfAbsent(biomeKey, key -> ConcurrentHashMap.newKeySet())
+                .addAll(playerUUIDs);
     }
 
     public static boolean shouldPrevent(ResourceKey biomeKey, Player player) {
-        if (!recentlyRegistered.containsKey(biomeKey) || !KeyChains.biomes().isRegistered(biomeKey)) {
+        Set<UUID> uuids = recentlyRegistered.get(biomeKey);
+        if (uuids == null || uuids.isEmpty()) {
             return false;
         }
-        List<UUID> uuidList = recentlyRegistered.get(biomeKey);
-        return uuidList.contains(player.getUniqueId());
+        return uuids.contains(player.getUniqueId()) && KeyChains.biomes().isRegistered(biomeKey);
     }
 
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        Player player = event.getPlayer();
-        UUID playerUUID = player.getUniqueId();
+        UUID playerUUID = event.getPlayer().getUniqueId();
 
-        for (var entry : recentlyRegistered.entrySet()) {
-            ResourceKey biomeKey = entry.getKey();
-            List<UUID> uuidList = entry.getValue();
-            uuidList.remove(playerUUID);
-
-            if (uuidList.isEmpty()) {
-                recentlyRegistered.remove(biomeKey);
-            }
-        }
+        recentlyRegistered.entrySet().removeIf(entry -> {
+            entry.getValue().remove(playerUUID);
+            return entry.getValue().isEmpty();
+        });
     }
 }

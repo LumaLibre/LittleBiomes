@@ -1,7 +1,6 @@
 package dev.lumas.biomes.configuration;
 
 import dev.lumas.biomes.enums.SimpleParticleData;
-import dev.lumas.biomes.model.WorldGuardHook;
 import dev.wyck.biome.CustomBiome;
 import dev.wyck.environment.GrassColorModifier;
 import dev.wyck.environment.attribute.EnvironmentAttribute;
@@ -155,35 +154,24 @@ public class OkaeriLittleBiome extends OkaeriConfig {
 
         VirtualBiome phonyCustomBiome = VirtualBiome.builder()
                 .biome(resourceKey)
+                .priority(this.biomePriority != null ? this.biomePriority : PacketHandler.Priority.NORMAL)
                 .conditional((player, chunkLocation) -> {
                     if (BadRegistryPrevention.shouldPrevent(resourceKey, player)) {
                         return false;
                     }
 
                     WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(player.getWorld(), chunkLocation);
-                    return CachedLittleBiomes.INSTANCE.isChunkWithinAnchorRadius(worldTiedChunkLocation, resourceKey)
-                            || matchesWorldGuardRegion(worldTiedChunkLocation, resourceKey);
+                    return CachedLittleBiomes.INSTANCE.chunkMatches(worldTiedChunkLocation, resourceKey);
                 })
 
                 .positionCondition((player, position) -> {
                     WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(player.getWorld(), position.chunkLocation());
-                    return CachedLittleBiomes.INSTANCE.isCellWithinAnchorRadius(worldTiedChunkLocation, resourceKey, position)
-                            || matchesWorldGuardRegion(worldTiedChunkLocation, resourceKey);
+                    return CachedLittleBiomes.INSTANCE.cellMatches(worldTiedChunkLocation, resourceKey, position);
                 })
                 .build();
 
         packetHandler.appendBiome(phonyCustomBiome);
         LittleBiomes.debug("Added biome to packet handler: " + this.ResourceKey().toString());
-    }
-
-
-    private static boolean matchesWorldGuardRegion(WorldTiedChunkLocation chunk, ResourceKey resourceKey) {
-        WorldGuardHook worldGuardHook = LittleBiomes.worldGuardHook();
-        if (worldGuardHook == null) {
-            return false;
-        }
-
-        return resourceKey.key().value().equalsIgnoreCase(worldGuardHook.getWorldGuardRegionLittleBiomeName(chunk));
     }
 
 
