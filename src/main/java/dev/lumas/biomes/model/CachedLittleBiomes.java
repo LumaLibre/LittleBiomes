@@ -77,14 +77,15 @@ public final class CachedLittleBiomes {
         return false;
     }
 
-    public void cacheChunk(WorldTiedChunkLocation location, ResourceKey biomeKey, SimpleBlockLocation anchor) {
+    public boolean cacheChunk(WorldTiedChunkLocation location, ResourceKey biomeKey, SimpleBlockLocation anchor) {
         CachedAnchor cachedAnchor = new CachedAnchor(biomeKey, anchor);
         if (cachedAnchor.equals(cachedChunkLocations.put(location, cachedAnchor))) {
-            return; // re-reported on chunk load; the lookups are still good
+            return false; // re-reported on chunk load; the lookups are still good
         }
 
         coverageByChunk.invalidateAll();
         LittleBiomes.debug("Cached new chunk, size: %d".formatted(cachedChunkLocations.size()));
+        return true;
     }
 
     public void uncacheChunk(WorldTiedChunkLocation location) {

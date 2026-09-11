@@ -1,6 +1,7 @@
 package dev.lumas.biomes.events;
 
-import com.google.common.base.Preconditions;
+import dev.lumas.biomes.LittleBiomes;
+import dev.lumas.biomes.model.AnchorScanner;
 import dev.lumas.biomes.model.CachedLittleBiomes;
 import dev.lumas.biomes.model.KeyedData;
 import dev.lumas.biomes.model.SimpleBlockLocation;
@@ -11,31 +12,32 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.ChunkLoadEvent;
 
-import java.util.concurrent.CompletableFuture;
-
 public class ChunkListeners implements Listener {
 
     @EventHandler
     public void onChunkLoadEvent(ChunkLoadEvent event) {
         Chunk chunk = event.getChunk();
 
-        CompletableFuture.runAsync(() -> {
-            if (!KeyedData.CHUNK_BIOME.matches(chunk)) {
-                return;
-            }
+        if (!KeyedData.CHUNK_BIOME.matches(chunk)) {
+            return;
+        }
 
-            WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(chunk);
-            String biomeKeyString = Preconditions.checkNotNull(KeyedData.CHUNK_BIOME.get(chunk), "Expected to find biome key for chunk (%d, %d) in world %s".formatted(
-                    chunk.getX(), chunk.getZ(), chunk.getWorld().getName()
-            ));
-            String serializedAnchor = Preconditions.checkNotNull(KeyedData.ANCHOR_BLOCK.get(chunk), "Expected to find anchor data for little biome in chunk (%d, %d) in world %s".formatted(
-                    chunk.getX(), chunk.getZ(), chunk.getWorld().getName()
-            ));
+        String biomeKeyString = KeyedData.CHUNK_BIOME.get(chunk);
+        String serializedAnchor = KeyedData.ANCHOR_BLOCK.get(chunk);
+        if (biomeKeyString == null || serializedAnchor == null) {
+            LittleBiomes.instance().getLogger().warning(
+                    "Chunk (%d, %d) in world %s is tagged as a little biome but is missing its %s data; skipping.".formatted(
+                            chunk.getX(), chunk.getZ(), chunk.getWorld().getName(),
+                            biomeKeyString == null ? "biome key" : "anchor"
+                    ));
+            return;
+        }
 
-
-            ResourceKey biomeKey = ResourceKey.fromString(biomeKeyString);
-            SimpleBlockLocation anchorLocation = SimpleBlockLocation.fromSerialized(serializedAnchor, chunk.getWorld());
-            CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation, biomeKey, anchorLocation);
-        });
+        WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(chunk);
+        ResourceKey biomeKey = ResourceKey.fromString(biomeKeyString);
+        SimpleBlockLocation anchorLocation = SimpleBlockLocation.fromSerialized(serializedAnchor, chunk.getWorld());
+        if (CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation, biomeKey, anchorLocation)) {
+            AnchorScanner.refreshAround(chunk);
+        }
     }
 }

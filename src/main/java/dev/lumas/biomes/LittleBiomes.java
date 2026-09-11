@@ -1,12 +1,10 @@
 package dev.lumas.biomes;
 
-import com.google.common.base.Preconditions;
 import dev.lumas.biomes.configuration.serdes.EnumTransformers;
 import dev.lumas.biomes.enums.SimpleParticleData;
 import dev.lumas.biomes.model.WorldGuardHook;
 import dev.wyck.environment.GrassColorModifier;
 import dev.wyck.environment.particle.ParticleTypes;
-import dev.wyck.keys.ResourceKey;
 import dev.wyck.renderer.packet.PacketHandler;
 import eu.okaeri.configs.ConfigManager;
 import eu.okaeri.configs.OkaeriConfig;
@@ -19,23 +17,21 @@ import dev.lumas.biomes.configuration.Config;
 import dev.lumas.biomes.events.BlockListeners;
 import dev.lumas.biomes.events.ChunkListeners;
 import dev.lumas.biomes.events.BadRegistryPrevention;
+import dev.lumas.biomes.events.PlayerListeners;
+import dev.lumas.biomes.model.AnchorScanner;
 import dev.lumas.biomes.model.CachedLittleBiomes;
 import dev.lumas.biomes.model.KeyedData;
 import dev.lumas.biomes.model.SimpleBlockLocation;
 import dev.lumas.biomes.model.WorldTiedChunkLocation;
 import dev.lumas.biomes.util.Executors;
-import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Accessors(fluent = true)
@@ -70,6 +66,7 @@ public final class LittleBiomes extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new BlockListeners(), this);
         getServer().getPluginManager().registerEvents(new ChunkListeners(), this);
         getServer().getPluginManager().registerEvents(new BadRegistryPrevention(), this);
+        getServer().getPluginManager().registerEvents(new PlayerListeners(), this);
         getCommand("littlebiomes").setExecutor(new CommandManager());
 
 
@@ -86,7 +83,12 @@ public final class LittleBiomes extends JavaPlugin {
             packetHandler.register();
         });
 
-        this.loadExistingChunks();
+        try {
+            this.loadExistingChunks();
+        } catch (Throwable t) {
+            getLogger().severe("Failed to scan loaded chunks for existing anchors; they will be picked up as chunks reload.");
+            t.printStackTrace();
+        }
         this.anchorParticlesTask();
     }
 
@@ -156,42 +158,8 @@ public final class LittleBiomes extends JavaPlugin {
     }
 
     private void loadExistingChunks() {
-        List<Chunk> chunks = new ArrayList<>();
         for (Player player : getServer().getOnlinePlayers()) {
-            int viewDistance = player.getViewDistance();
-            Location playerLocation = player.getLocation();
-            World world = player.getWorld();
-
-            int playerChunkX = playerLocation.getBlockX() >> 4;
-            int playerChunkZ = playerLocation.getBlockZ() >> 4;
-            for (int x = playerChunkX - viewDistance; x <= playerChunkX + viewDistance; x++) {
-                for (int z = playerChunkZ - viewDistance; z <= playerChunkZ + viewDistance; z++) {
-                    chunks.add(world.getChunkAt(x, z, false));
-                }
-            }
-        }
-
-        for (Chunk chunk : chunks) {
-            if (!KeyedData.CHUNK_BIOME.matches(chunk)) {
-                continue;
-            }
-
-            WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(chunk);
-            String biomeKeyString = Preconditions.checkNotNull(KeyedData.CHUNK_BIOME.get(chunk), "Expected to find biome key for chunk (%d, %d) in world %s".formatted(
-                    chunk.getX(), chunk.getZ(), chunk.getWorld().getName()
-            ));
-
-            String serializedAnchor = Preconditions.checkNotNull(KeyedData.ANCHOR_BLOCK.get(chunk), "Expected to find anchor data for little biome in chunk (%d, %d) in world %s".formatted(
-                    chunk.getX(), chunk.getZ(), chunk.getWorld().getName()
-            ));
-
-            ResourceKey biomeKey = ResourceKey.fromString(biomeKeyString);
-            SimpleBlockLocation anchorLocation = SimpleBlockLocation.fromSerialized(serializedAnchor, chunk.getWorld());
-            CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation, biomeKey, anchorLocation);
-            debug("Cached chunk at %s in world %s on startup.".formatted(
-                    worldTiedChunkLocation.chunkX() + "," + worldTiedChunkLocation.chunkZ(),
-                    worldTiedChunkLocation.world().getName()
-            ));
+            AnchorScanner.scanAround(player);
         }
     }
 

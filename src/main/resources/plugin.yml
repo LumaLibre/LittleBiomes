@@ -6,6 +6,8 @@ folia-supported: true
 softdepend:
   - RealisticSeasons
   - WorldGuard
+  - ProtocolLib
+  - Foliage
 commands:
   littlebiomes:
     description: Main command for LittleBiomes plugin.
