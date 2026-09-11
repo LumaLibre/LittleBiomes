@@ -6,15 +6,17 @@ import com.google.common.cache.LoadingCache;
 import dev.lumas.biomes.LittleBiomes;
 import dev.wyck.keys.ResourceKey;
 import dev.wyck.misc.BiomePosition;
+import org.bukkit.World;
 
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 public final class CachedLittleBiomes {
 
@@ -29,6 +31,9 @@ public final class CachedLittleBiomes {
             .maximumSize(4096)
             .build(CacheLoader.from(this::computeCoverage));
 
+    private static final long MEMO_TTL_NANOS = TimeUnit.SECONDS.toNanos(1);
+    private final AtomicLong generation = new AtomicLong();
+
     private static final ThreadLocal<RenderingChunk> RENDERING = ThreadLocal.withInitial(RenderingChunk::new);
 
     public boolean isChunkCached(WorldTiedChunkLocation location) {
@@ -40,18 +45,27 @@ public final class CachedLittleBiomes {
         return cachedAnchor != null && cachedAnchor.biomeKey().equals(biomeKey);
     }
 
-    public boolean chunkMatches(WorldTiedChunkLocation chunk, ResourceKey biomeKey) {
-        ChunkCoverage coverage = coverageOf(chunk, biomeKey);
-        boolean regionMatch = matchesWorldGuardRegion(chunk, biomeKey);
-        RENDERING.get().remember(chunk, biomeKey, coverage, regionMatch);
-        return regionMatch || !coverage.anchors().isEmpty();
+    public boolean chunkMatches(World world, int chunkX, int chunkZ, ResourceKey biomeKey) {
+        RenderedChunkState state = stateFor(world, chunkX, chunkZ, biomeKey);
+        return state.regionMatch() || !state.coverage().anchors().isEmpty();
     }
 
-    public boolean cellMatches(WorldTiedChunkLocation chunk, ResourceKey biomeKey, BiomePosition position) {
-        RenderedChunkState state = RENDERING.get().recall(chunk, biomeKey);
+    private RenderedChunkState stateFor(World world, int chunkX, int chunkZ, ResourceKey biomeKey) {
+        long currentGeneration = this.generation.get();
+        long now = System.nanoTime();
+
+        RenderingChunk memo = RENDERING.get();
+        RenderedChunkState state = memo.recall(world, chunkX, chunkZ, biomeKey, currentGeneration, now);
         if (state == null) {
-            state = new RenderedChunkState(coverageOf(chunk, biomeKey), matchesWorldGuardRegion(chunk, biomeKey)); // no chunk gate ran on this thread
+            WorldTiedChunkLocation chunk = WorldTiedChunkLocation.of(world, chunkX, chunkZ);
+            state = new RenderedChunkState(coverageOf(chunk, biomeKey), matchesWorldGuardRegion(chunk, biomeKey));
+            memo.remember(world, chunkX, chunkZ, biomeKey, state, currentGeneration, now);
         }
+        return state;
+    }
+
+    public boolean cellMatches(World world, int chunkX, int chunkZ, ResourceKey biomeKey, BiomePosition position) {
+        RenderedChunkState state = stateFor(world, chunkX, chunkZ, biomeKey);
 
         ChunkCoverage coverage = state.coverage();
         if (state.regionMatch() || coverage.fullyCovered()) {
@@ -83,7 +97,7 @@ public final class CachedLittleBiomes {
             return false; // re-reported on chunk load; the lookups are still good
         }
 
-        coverageByChunk.invalidateAll();
+        invalidateAnchorLookups();
         LittleBiomes.debug("Cached new chunk, size: %d".formatted(cachedChunkLocations.size()));
         return true;
     }
@@ -93,7 +107,7 @@ public final class CachedLittleBiomes {
             return;
         }
 
-        coverageByChunk.invalidateAll();
+        invalidateAnchorLookups();
         LittleBiomes.debug("Uncached chunk, size: %d".formatted(cachedChunkLocations.size()));
     }
 
@@ -103,6 +117,7 @@ public final class CachedLittleBiomes {
      */
     public void invalidateAnchorLookups() {
         coverageByChunk.invalidateAll();
+        generation.incrementAndGet();
     }
 
     public Set<WorldTiedChunkLocation> getCachedChunks() {
@@ -178,26 +193,61 @@ public final class CachedLittleBiomes {
     }
 
 
-    /**
-     * One thread's view of the chunk it is rendering. Written by the chunk-level gate, read by
-     * every cell of that chunk, and reset as soon as the gate runs for a different chunk.
-     */
     private static final class RenderingChunk {
 
-        private @Nullable WorldTiedChunkLocation chunk;
-        private final Map<ResourceKey, RenderedChunkState> stateByBiome = new HashMap<>();
+        private static final int MAX_BIOMES = 16;
 
-        void remember(WorldTiedChunkLocation chunk, ResourceKey biomeKey, ChunkCoverage coverage, boolean regionMatch) {
-            if (!chunk.equals(this.chunk)) {
-                this.chunk = chunk;
-                this.stateByBiome.clear();
-            }
-            this.stateByBiome.put(biomeKey, new RenderedChunkState(coverage, regionMatch));
-        }
+        private final ResourceKey[] keys = new ResourceKey[MAX_BIOMES];
+        private final RenderedChunkState[] states = new RenderedChunkState[MAX_BIOMES];
+        private int size;
+
+        private @Nullable World world;
+        private int chunkX;
+        private int chunkZ;
+        private long generation = Long.MIN_VALUE;
+        private long expiresAtNanos;
 
         @Nullable
-        RenderedChunkState recall(WorldTiedChunkLocation chunk, ResourceKey biomeKey) {
-            return chunk.equals(this.chunk) ? this.stateByBiome.get(biomeKey) : null;
+        RenderedChunkState recall(World world, int chunkX, int chunkZ, ResourceKey biomeKey, long generation, long now) {
+            if (!holds(world, chunkX, chunkZ, generation, now)) {
+                return null;
+            }
+            for (int i = 0; i < this.size; i++) {
+                if (this.keys[i] == biomeKey) {
+                    return this.states[i];
+                }
+            }
+            return null;
+        }
+
+        void remember(World world, int chunkX, int chunkZ, ResourceKey biomeKey, RenderedChunkState state, long generation, long now) {
+            if (!holds(world, chunkX, chunkZ, generation, now)) {
+                this.world = world;
+                this.chunkX = chunkX;
+                this.chunkZ = chunkZ;
+                this.generation = generation;
+                this.expiresAtNanos = now + MEMO_TTL_NANOS;
+                this.size = 0;
+            }
+            for (int i = 0; i < this.size; i++) {
+                if (this.keys[i] == biomeKey) {
+                    this.states[i] = state;
+                    return;
+                }
+            }
+            if (this.size < MAX_BIOMES) {
+                this.keys[this.size] = biomeKey;
+                this.states[this.size] = state;
+                this.size++;
+            }
+        }
+
+        private boolean holds(World world, int chunkX, int chunkZ, long generation, long now) {
+            return this.generation == generation
+                    && this.chunkX == chunkX
+                    && this.chunkZ == chunkZ
+                    && now - this.expiresAtNanos < 0
+                    && this.world == world;
         }
     }
 

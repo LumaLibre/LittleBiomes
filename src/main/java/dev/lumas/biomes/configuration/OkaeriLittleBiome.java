@@ -13,6 +13,7 @@ import dev.wyck.environment.particle.ParticleData;
 import dev.wyck.environment.particle.ParticleTypes;
 import dev.wyck.keys.KeyChains;
 import dev.wyck.keys.ResourceKey;
+import dev.wyck.misc.ChunkLocation;
 import dev.wyck.renderer.packet.PacketHandler;
 import dev.wyck.renderer.packet.data.BlockReplacement;
 import dev.wyck.renderer.packet.data.VirtualBiome;
@@ -24,7 +25,6 @@ import dev.lumas.biomes.LittleBiomes;
 import dev.lumas.biomes.events.BadRegistryPrevention;
 import dev.lumas.biomes.model.CachedLittleBiomes;
 import dev.lumas.biomes.model.KeyedData;
-import dev.lumas.biomes.model.WorldTiedChunkLocation;
 import dev.lumas.biomes.util.TextUtil;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
@@ -160,13 +160,14 @@ public class OkaeriLittleBiome extends OkaeriConfig {
                         return false;
                     }
 
-                    WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(player.getWorld(), chunkLocation);
-                    return CachedLittleBiomes.INSTANCE.chunkMatches(worldTiedChunkLocation, resourceKey);
+                    return CachedLittleBiomes.INSTANCE.chunkMatches(
+                            player.getWorld(), chunkLocation.x(), chunkLocation.z(), resourceKey);
                 })
 
                 .positionCondition((player, position) -> {
-                    WorldTiedChunkLocation worldTiedChunkLocation = WorldTiedChunkLocation.of(player.getWorld(), position.chunkLocation());
-                    return CachedLittleBiomes.INSTANCE.cellMatches(worldTiedChunkLocation, resourceKey, position);
+                    ChunkLocation chunkLocation = position.chunkLocation();
+                    return CachedLittleBiomes.INSTANCE.cellMatches(
+                            player.getWorld(), chunkLocation.x(), chunkLocation.z(), resourceKey, position);
                 })
                 .build();
 
