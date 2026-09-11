@@ -52,7 +52,7 @@ public final class LittleBiomes extends JavaPlugin {
     public void onLoad() {
         instance = this;
         okaeriConfig = loadConfig(Config.class, "config.yml");
-        packetHandler = PacketHandler.of(this, PacketHandler.Injector.NETTY);
+        packetHandler = PacketHandler.of(this, PacketHandler.Injector.PROTOCOLLIB, PacketHandler.Priority.HIGHEST);
         if (getServer().getPluginManager().getPlugin("WorldGuard") != null) {
             worldGuardHook = new WorldGuardHook();
             worldGuardHook.register();
