@@ -161,13 +161,13 @@ public class OkaeriLittleBiome extends OkaeriConfig {
                     }
 
                     return CachedLittleBiomes.INSTANCE.chunkMatches(
-                            player.getWorld(), chunkLocation.x(), chunkLocation.z(), resourceKey);
+                            player, chunkLocation.x(), chunkLocation.z(), resourceKey);
                 })
 
                 .positionCondition((player, position) -> {
                     ChunkLocation chunkLocation = position.chunkLocation();
                     return CachedLittleBiomes.INSTANCE.cellMatches(
-                            player.getWorld(), chunkLocation.x(), chunkLocation.z(), resourceKey, position);
+                            player, chunkLocation.x(), chunkLocation.z(), resourceKey, position);
                 })
                 .build();
 

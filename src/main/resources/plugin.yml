@@ -12,3 +12,13 @@ commands:
   littlebiomes:
     description: Main command for LittleBiomes plugin.
     usage: /<command>
+  pbiome:
+    description: Toggle your personal biome, or open the menu to store an anchor in.
+    usage: /<command> [anchor]
+permissions:
+  littlebiomes.command.pbiome:
+    description: Toggle your personal biome on and off.
+    default: op
+  littlebiomes.command.pbiome.anchor:
+    description: Open the personal biome anchor menu.
+    default: op

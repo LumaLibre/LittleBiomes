@@ -13,14 +13,17 @@ import eu.okaeri.configs.yaml.bukkit.YamlBukkitConfigurer;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import dev.lumas.biomes.commands.CommandManager;
+import dev.lumas.biomes.commands.PersonalBiomeCommand;
 import dev.lumas.biomes.configuration.Config;
 import dev.lumas.biomes.events.BlockListeners;
 import dev.lumas.biomes.events.ChunkListeners;
 import dev.lumas.biomes.events.BadRegistryPrevention;
+import dev.lumas.biomes.events.PersonalAnchorMenuListeners;
 import dev.lumas.biomes.events.PlayerListeners;
 import dev.lumas.biomes.model.AnchorScanner;
 import dev.lumas.biomes.model.CachedLittleBiomes;
 import dev.lumas.biomes.model.KeyedData;
+import dev.lumas.biomes.model.PersonalBiomes;
 import dev.lumas.biomes.model.SimpleBlockLocation;
 import dev.lumas.biomes.model.WorldTiedChunkLocation;
 import dev.lumas.biomes.util.Executors;
@@ -67,7 +70,16 @@ public final class LittleBiomes extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new ChunkListeners(), this);
         getServer().getPluginManager().registerEvents(new BadRegistryPrevention(), this);
         getServer().getPluginManager().registerEvents(new PlayerListeners(), this);
+        getServer().getPluginManager().registerEvents(new PersonalAnchorMenuListeners(), this);
         getCommand("littlebiomes").setExecutor(new CommandManager());
+
+        PersonalBiomeCommand personalBiomeCommand = new PersonalBiomeCommand();
+        getCommand("pbiome").setExecutor(personalBiomeCommand);
+        getCommand("pbiome").setTabCompleter(personalBiomeCommand);
+
+        PersonalBiomes.INSTANCE.reloadDisabledWorlds();
+        // Covers a mid-session plugin reload, where nobody is going to fire a join event for us.
+        getServer().getOnlinePlayers().forEach(PersonalBiomes.INSTANCE::load);
 
 
         Executors.delayedGlobalSync(1, () -> {

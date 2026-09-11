@@ -2,6 +2,7 @@ package dev.lumas.biomes.configuration;
 
 import dev.lumas.biomes.enums.SimpleParticleData;
 import dev.wyck.environment.attribute.EnvironmentAttributes;
+import dev.wyck.keys.ResourceKey;
 import dev.wyck.environment.particle.ParticleTypes;
 import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.Comment;
@@ -33,6 +34,12 @@ public class Config extends OkaeriConfig {
 
     @Comment("Cooldown to break an anchor in seconds. Set to <= 0 to disable.")
     private int anchorBreakCooldown = 3;
+
+    @Comment("Worlds where personal biomes (/pbiome) are switched off, use world keys")
+    private Set<String> personalBiomeDisabledWorlds = Set.of(
+        "worlds:special",
+        "worlds:event_new"
+    );
 
     @Comment({
             "Defined little biomes. There's lots to configure!",
@@ -85,6 +92,12 @@ public class Config extends OkaeriConfig {
      */
     public int anchorBiomeChunkRadius() {
         return (anchorBiomeRadiusBlocks >> 4) + 1;
+    }
+
+
+    @Nullable
+    public OkaeriLittleBiome getLittleBiome(ResourceKey biomeKey) {
+        return getLittleBiomeByName(biomeKey.key().value());
     }
 
 

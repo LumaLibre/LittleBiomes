@@ -7,22 +7,31 @@ import org.bukkit.persistence.PersistentDataHolder;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Nullable;
 
-public final class KeyedData<V> {
+/**
+ * @param <P> the type the value is stored as on disk
+ * @param <V> the type the value is read and written as
+ */
+public final class KeyedData<P, V> {
 
 
-    public static final KeyedData<String> ANCHOR = new KeyedData<>("anchor", PersistentDataType.STRING);
-    public static final KeyedData<String> ANCHOR_BLOCK = new KeyedData<>("anchor-block", PersistentDataType.STRING);
-    public static final KeyedData<String> CHUNK_BIOME = new KeyedData<>("chunk-biome", PersistentDataType.STRING);
+    public static final KeyedData<String, String> ANCHOR = new KeyedData<>("anchor", PersistentDataType.STRING);
+    public static final KeyedData<String, String> ANCHOR_BLOCK = new KeyedData<>("anchor-block", PersistentDataType.STRING);
+    public static final KeyedData<String, String> CHUNK_BIOME = new KeyedData<>("chunk-biome", PersistentDataType.STRING);
+
+    /** The biome key of the anchor a player has handed over to their personal biome menu. */
+    public static final KeyedData<String, String> PERSONAL_BIOME = new KeyedData<>("personal-biome", PersistentDataType.STRING);
+    /** Whether the player currently has their personal biome rendering switched on. */
+    public static final KeyedData<Byte, Boolean> PERSONAL_BIOME_ENABLED = new KeyedData<>("personal-biome-enabled", PersistentDataType.BOOLEAN);
 
 
     private final NamespacedKey namespacedKey;
-    private final PersistentDataType<V, V> type;
+    private final PersistentDataType<P, V> type;
 
-    public KeyedData(NamespacedKey namespacedKey, PersistentDataType<V, V> type) {
+    public KeyedData(NamespacedKey namespacedKey, PersistentDataType<P, V> type) {
         this.namespacedKey = namespacedKey;
         this.type = type;
     }
-    public KeyedData(String key, PersistentDataType<V, V> type) {
+    public KeyedData(String key, PersistentDataType<P, V> type) {
         this(new NamespacedKey(LittleBiomes.instance(), key), type);
     }
 
