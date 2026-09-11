@@ -2,7 +2,6 @@ package dev.lumas.biomes.model;
 
 import dev.wyck.misc.ChunkLocation;
 import org.bukkit.Chunk;
-import org.bukkit.Location;
 import org.bukkit.World;
 
 import java.util.concurrent.CompletableFuture;
@@ -23,9 +22,5 @@ public record WorldTiedChunkLocation(World world, int chunkX, int chunkZ) {
 
     public CompletableFuture<Chunk> toBukkitChunk() {
         return world.getChunkAtAsync(chunkX, chunkZ);
-    }
-
-    public Location toLocation() {
-        return new Location(world, chunkX << 4, 0, chunkZ << 4);
     }
 }

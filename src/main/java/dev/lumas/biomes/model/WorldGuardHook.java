@@ -4,14 +4,17 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
-import com.sk89q.worldedit.util.Location;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.flags.StringFlag;
 import com.sk89q.worldguard.protection.flags.registry.FlagConflictException;
 import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
+import com.sk89q.worldguard.protection.managers.RegionManager;
+import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
-import com.sk89q.worldguard.protection.regions.RegionQuery;
+import org.bukkit.World;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 public class WorldGuardHook {
 
     private static final String FLAG_NAME = "little-biome";
+    private static final String CHUNK_PROBE_ID = "littlebiomes_chunk_probe";
 
     @Getter
     private StringFlag littleBiomeFlag;
@@ -52,11 +56,26 @@ public class WorldGuardHook {
 
     @Nullable
     private String queryLittleBiomeName(WorldTiedChunkLocation worldTiedChunkLocation) {
-        Location worldEditLocation = BukkitAdapter.adapt(worldTiedChunkLocation.toLocation());
+        World world = worldTiedChunkLocation.world();
         RegionContainer regionContainer = WorldGuard.getInstance().getPlatform().getRegionContainer();
-        RegionQuery regionQuery = regionContainer.createQuery();
-        ApplicableRegionSet regionSet = regionQuery.getApplicableRegions(worldEditLocation);
+        RegionManager regionManager = regionContainer.get(BukkitAdapter.adapt(world));
+        if (regionManager == null) {
+            return null;
+        }
 
+        int minX = worldTiedChunkLocation.chunkX() << 4;
+        int minZ = worldTiedChunkLocation.chunkZ() << 4;
+        ProtectedRegion chunkColumn = new ProtectedCuboidRegion(
+                CHUNK_PROBE_ID,
+                true,
+                BlockVector3.at(minX, world.getMinHeight(), minZ),
+                BlockVector3.at(minX + 15, world.getMaxHeight(), minZ + 15)
+        );
+
+        ApplicableRegionSet regionSet = regionManager.getApplicableRegions(chunkColumn);
+        if (regionSet.size() == 0) {
+            return null;
+        }
         return regionSet.queryValue(null, this.littleBiomeFlag);
     }
 

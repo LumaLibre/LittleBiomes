@@ -2,6 +2,7 @@ package dev.lumas.biomes.commands;
 
 import dev.lumas.biomes.commands.subcommand.GiveAnchorCommand;
 import dev.lumas.biomes.commands.subcommand.NearestAnchorCommand;
+import dev.lumas.biomes.commands.subcommand.ReconfigureCommand;
 import dev.lumas.biomes.commands.subcommand.ReloadCommand;
 import dev.lumas.biomes.util.TextUtil;
 import org.bukkit.command.Command;
@@ -17,7 +18,8 @@ public class CommandManager implements TabExecutor {
     private final List<Subcommand> subcommands = List.of(
             new GiveAnchorCommand(),
             new NearestAnchorCommand(),
-            new ReloadCommand()
+            new ReloadCommand(),
+            new ReconfigureCommand()
     );
 
 

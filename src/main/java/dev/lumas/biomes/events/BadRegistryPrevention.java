@@ -34,14 +34,19 @@ public class BadRegistryPrevention implements Listener {
         return uuids.contains(player.getUniqueId()) && KeyChains.biomes().isRegistered(biomeKey);
     }
 
+    public static void forget(Player player) {
+        forget(player.getUniqueId());
+    }
 
-    @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        UUID playerUUID = event.getPlayer().getUniqueId();
-
+    private static void forget(UUID playerUUID) {
         recentlyRegistered.entrySet().removeIf(entry -> {
             entry.getValue().remove(playerUUID);
             return entry.getValue().isEmpty();
         });
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        forget(event.getPlayer());
     }
 }
