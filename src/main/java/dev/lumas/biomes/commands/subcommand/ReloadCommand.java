@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.UUID;
 
 public class ReloadCommand implements Subcommand {
-    @Override
-    public boolean execute(CommandSender sender, String label, List<String> args) {
+
+    public static void reload() {
         Config config = LittleBiomes.okaeriConfig();
         config.load(true);
         CachedLittleBiomes.INSTANCE.invalidateAnchorLookups(); // the radius may have changed
@@ -34,6 +34,11 @@ public class ReloadCommand implements Subcommand {
                 BadRegistryPrevention.populate(okaeriLittleBiome.ResourceKey(), playerUUIDs);
             }
         }
+    }
+
+    @Override
+    public boolean execute(CommandSender sender, String label, List<String> args) {
+        reload();
         TextUtil.msg(sender, "LittleBiomes configuration reloaded. Relogging is required to see biome changes.");
         return true;
     }
