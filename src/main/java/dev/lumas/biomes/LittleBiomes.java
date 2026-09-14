@@ -78,7 +78,6 @@ public final class LittleBiomes extends JavaPlugin {
         getCommand("pbiome").setTabCompleter(personalBiomeCommand);
 
         PersonalBiomes.INSTANCE.reloadDisabledWorlds();
-        // Covers a mid-session plugin reload, where nobody is going to fire a join event for us.
         getServer().getOnlinePlayers().forEach(PersonalBiomes.INSTANCE::load);
 
 

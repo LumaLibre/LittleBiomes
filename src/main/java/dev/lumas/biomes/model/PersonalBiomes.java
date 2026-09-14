@@ -1,6 +1,7 @@
 package dev.lumas.biomes.model;
 
 import dev.lumas.biomes.LittleBiomes;
+import dev.lumas.biomes.util.Executors;
 import dev.lumas.biomes.commands.PersonalBiomeCommand;
 import dev.wyck.keys.ResourceKey;
 import dev.wyck.renderer.updater.BiomeUpdater;
@@ -9,7 +10,11 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -22,7 +27,11 @@ public final class PersonalBiomes {
 
     private static final BiomeUpdater BIOME_UPDATER = BiomeUpdater.of(LittleBiomes.instance());
 
+    private static final int CHUNKS_PER_REFRESH_TICK = 8;
+
     private final Map<UUID, State> states = new ConcurrentHashMap<>();
+
+    private final Map<UUID, Integer> refreshGenerations = new ConcurrentHashMap<>();
 
     private volatile Set<NamespacedKey> disabledWorlds = Set.of();
 
@@ -79,6 +88,7 @@ public final class PersonalBiomes {
 
     public void unload(Player player) {
         states.remove(player.getUniqueId());
+        refreshGenerations.remove(player.getUniqueId());
     }
 
     public State state(Player player) {
@@ -109,7 +119,55 @@ public final class PersonalBiomes {
     }
 
     public void refresh(Player player) {
-        BIOME_UPDATER.updateChunksForPlayer(player);
+        World world = player.getWorld();
+        int generation = refreshGenerations.merge(player.getUniqueId(), 1, Integer::sum);
+
+        int playerChunkX = player.getLocation().getBlockX() >> 4;
+        int playerChunkZ = player.getLocation().getBlockZ() >> 4;
+
+        List<Long> chunkKeys = new ArrayList<>(player.getSentChunkKeys());
+        chunkKeys.sort(Comparator.comparingLong(key -> {
+            long dx = chunkX(key) - playerChunkX;
+            long dz = chunkZ(key) - playerChunkZ;
+            return dx * dx + dz * dz;
+        }));
+
+        refreshBatch(player, world, generation, chunkKeys.iterator());
+    }
+
+    private void refreshBatch(Player player, World world, int generation, Iterator<Long> chunkKeys) {
+        Executors.syncPlayerDelayed(player, 1, () -> {
+            if (!player.isOnline()
+                    || !world.equals(player.getWorld())
+                    || !Integer.valueOf(generation).equals(refreshGenerations.get(player.getUniqueId()))) {
+                return;
+            }
+
+            int sent = 0;
+            while (chunkKeys.hasNext() && sent < CHUNKS_PER_REFRESH_TICK) {
+                long key = chunkKeys.next();
+                int chunkX = chunkX(key);
+                int chunkZ = chunkZ(key);
+                if (!world.isChunkLoaded(chunkX, chunkZ)) {
+                    continue;
+                }
+
+                BIOME_UPDATER.updateChunkAsync(world.getChunkAtAsync(chunkX, chunkZ));
+                sent++;
+            }
+
+            if (chunkKeys.hasNext()) {
+                refreshBatch(player, world, generation, chunkKeys);
+            }
+        });
+    }
+
+    private static int chunkX(long chunkKey) {
+        return (int) chunkKey;
+    }
+
+    private static int chunkZ(long chunkKey) {
+        return (int) (chunkKey >> 32);
     }
 
     public void flush(Player player) {

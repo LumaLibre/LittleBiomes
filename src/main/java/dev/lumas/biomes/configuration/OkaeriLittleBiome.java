@@ -169,6 +169,8 @@ public class OkaeriLittleBiome extends OkaeriConfig {
                     return CachedLittleBiomes.INSTANCE.cellMatches(
                             player, chunkLocation.x(), chunkLocation.z(), resourceKey, position);
                 })
+                .wholeChunkCondition((player, chunkLocation) ->
+                    CachedLittleBiomes.INSTANCE.chunkFullyMatches(player, chunkLocation.x(), chunkLocation.z(), resourceKey))
                 .build();
 
         packetHandler.appendBiome(phonyCustomBiome);

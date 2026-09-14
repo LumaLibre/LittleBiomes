@@ -62,7 +62,6 @@ public class PersonalBiomeCommand implements TabExecutor {
         }
 
         boolean enabled = !state.enabled();
-        // Switching off stays allowed anywhere, so nobody gets stuck with it on.
         if (enabled && PersonalBiomes.INSTANCE.isDisabledIn(player.getWorld())) {
             TextUtil.msg(player, "<red>Personal biomes are disabled in this world.");
             return;

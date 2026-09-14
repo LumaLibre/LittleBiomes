@@ -48,44 +48,59 @@ public final class CachedLittleBiomes {
 
     public boolean chunkMatches(Player player, int chunkX, int chunkZ, ResourceKey biomeKey) {
         World world = player.getWorld();
-        RenderedChunkState state = stateFor(world, chunkX, chunkZ, biomeKey);
+        RenderedChunkState state = stateFor(player, world, chunkX, chunkZ, biomeKey);
         if (state.regionMatch() || !state.coverage().anchors().isEmpty()) {
             return true;
         }
 
-        if (!PersonalBiomes.INSTANCE.isActive(player, world, biomeKey)) {
+        if (!state.personalActive()) {
             return false;
         }
-        // A personal biome fills in everywhere, so the only thing that can rule this chunk out
-        // entirely is another little biome having claimed all of it.
         return !state.foreignRegion()
                 && !state.foreignCoverage(this, world, chunkX, chunkZ, biomeKey).fullyCovered();
     }
 
-    private RenderedChunkState stateFor(World world, int chunkX, int chunkZ, ResourceKey biomeKey) {
+    public boolean chunkFullyMatches(Player player, int chunkX, int chunkZ, ResourceKey biomeKey) {
+        World world = player.getWorld();
+        RenderedChunkState state = stateFor(player, world, chunkX, chunkZ, biomeKey);
+
+        if (state.regionMatch() || state.coverage().fullyCovered()) {
+            return true;
+        }
+
+        return state.personalActive()
+                && !state.foreignRegion()
+                && state.foreignCoverage(this, world, chunkX, chunkZ, biomeKey).anchors().isEmpty();
+    }
+
+    private RenderedChunkState stateFor(Player player, World world, int chunkX, int chunkZ, ResourceKey biomeKey) {
         long currentGeneration = this.generation.get();
         long now = System.nanoTime();
 
         RenderingChunk memo = RENDERING.get();
-        RenderedChunkState state = memo.recall(world, chunkX, chunkZ, biomeKey, currentGeneration, now);
+        RenderedChunkState state = memo.recall(player, world, chunkX, chunkZ, biomeKey, currentGeneration, now);
         if (state == null) {
             WorldTiedChunkLocation chunk = WorldTiedChunkLocation.of(world, chunkX, chunkZ);
-            state = new RenderedChunkState(coverageOf(chunk, biomeKey, false), regionBiomeName(chunk), biomeKey);
-            memo.remember(world, chunkX, chunkZ, biomeKey, state, currentGeneration, now);
+            state = new RenderedChunkState(
+                    coverageOf(chunk, biomeKey, false),
+                    regionBiomeName(chunk),
+                    biomeKey,
+                    PersonalBiomes.INSTANCE.isActive(player, world, biomeKey));
+            memo.remember(player, world, chunkX, chunkZ, biomeKey, state, currentGeneration, now);
         }
         return state;
     }
 
     public boolean cellMatches(Player player, int chunkX, int chunkZ, ResourceKey biomeKey, BiomePosition position) {
         World world = player.getWorld();
-        RenderedChunkState state = stateFor(world, chunkX, chunkZ, biomeKey);
-
+        RenderedChunkState state = stateFor(player, world, chunkX, chunkZ, biomeKey);
+        
         ChunkCoverage coverage = state.coverage();
         if (state.regionMatch() || coverage.fullyCovered() || covers(coverage.anchors(), position)) {
             return true;
         }
 
-        if (!PersonalBiomes.INSTANCE.isActive(player, world, biomeKey) || state.foreignRegion()) {
+        if (!state.personalActive() || state.foreignRegion()) {
             return false;
         }
 
@@ -93,7 +108,6 @@ public final class CachedLittleBiomes {
         return !foreign.fullyCovered() && !covers(foreign.anchors(), position);
     }
 
-    /** Whether any of these anchors reaches the given biome cell. */
     private static boolean covers(List<SimpleBlockLocation> anchors, BiomePosition position) {
         if (anchors.isEmpty()) {
             return false;
@@ -147,14 +161,8 @@ public final class CachedLittleBiomes {
         return cachedChunkLocations.keySet();
     }
 
-    /**
-     * @param foreign when true, collects the anchors of every little biome <em>except</em>
-     *                {@code biomeKey} -- the ones that get to override a personal biome
-     */
     private ChunkCoverage coverageOf(WorldTiedChunkLocation chunk, ResourceKey biomeKey, boolean foreign) {
         if (cachedChunkLocations.isEmpty()) {
-            // Worth short-circuiting: a personal biome asks about every chunk a player walks
-            // through, and there is nothing for the cache to remember on a server with no anchors.
             return ChunkCoverage.EMPTY;
         }
         return coverageByChunk.getUnchecked(new AnchorQuery(chunk, biomeKey, foreign));
@@ -235,6 +243,7 @@ public final class CachedLittleBiomes {
         private final RenderedChunkState[] states = new RenderedChunkState[MAX_BIOMES];
         private int size;
 
+        private @Nullable Player player;
         private @Nullable World world;
         private int chunkX;
         private int chunkZ;
@@ -242,8 +251,8 @@ public final class CachedLittleBiomes {
         private long expiresAtNanos;
 
         @Nullable
-        RenderedChunkState recall(World world, int chunkX, int chunkZ, ResourceKey biomeKey, long generation, long now) {
-            if (!holds(world, chunkX, chunkZ, generation, now)) {
+        RenderedChunkState recall(Player player, World world, int chunkX, int chunkZ, ResourceKey biomeKey, long generation, long now) {
+            if (!holds(player, world, chunkX, chunkZ, generation, now)) {
                 return null;
             }
             for (int i = 0; i < this.size; i++) {
@@ -254,8 +263,9 @@ public final class CachedLittleBiomes {
             return null;
         }
 
-        void remember(World world, int chunkX, int chunkZ, ResourceKey biomeKey, RenderedChunkState state, long generation, long now) {
-            if (!holds(world, chunkX, chunkZ, generation, now)) {
+        void remember(Player player, World world, int chunkX, int chunkZ, ResourceKey biomeKey, RenderedChunkState state, long generation, long now) {
+            if (!holds(player, world, chunkX, chunkZ, generation, now)) {
+                this.player = player;
                 this.world = world;
                 this.chunkX = chunkX;
                 this.chunkZ = chunkZ;
@@ -276,33 +286,35 @@ public final class CachedLittleBiomes {
             }
         }
 
-        private boolean holds(World world, int chunkX, int chunkZ, long generation, long now) {
+        private boolean holds(Player player, World world, int chunkX, int chunkZ, long generation, long now) {
             return this.generation == generation
                     && this.chunkX == chunkX
                     && this.chunkZ == chunkZ
                     && now - this.expiresAtNanos < 0
-                    && this.world == world;
+                    && this.world == world
+                    && this.player == player;
         }
     }
 
 
-    /**
-     * What one biome makes of one chunk. Only ever reachable from {@link #RENDERING}, so the
-     * foreign coverage -- which only the personal biome path ever asks for -- is filled in on
-     * demand rather than computed for every chunk that gets rendered.
-     */
     private static final class RenderedChunkState {
 
         private final ChunkCoverage coverage;
         private final boolean regionMatch;
         private final boolean foreignRegion;
+        private final boolean personalActive;
 
         private @Nullable ChunkCoverage foreignCoverage;
 
-        RenderedChunkState(ChunkCoverage coverage, @Nullable String regionBiomeName, ResourceKey biomeKey) {
+        RenderedChunkState(ChunkCoverage coverage, @Nullable String regionBiomeName, ResourceKey biomeKey, boolean personalActive) {
             this.coverage = coverage;
             this.regionMatch = biomeKey.key().value().equalsIgnoreCase(regionBiomeName);
             this.foreignRegion = regionBiomeName != null && !this.regionMatch;
+            this.personalActive = personalActive;
+        }
+
+        boolean personalActive() {
+            return this.personalActive;
         }
 
         ChunkCoverage coverage() {
@@ -313,7 +325,6 @@ public final class CachedLittleBiomes {
             return this.regionMatch;
         }
 
-        /** A region here names some other little biome, so it speaks for the whole chunk. */
         boolean foreignRegion() {
             return this.foreignRegion;
         }
