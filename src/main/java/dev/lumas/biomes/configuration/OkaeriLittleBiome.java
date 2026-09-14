@@ -19,7 +19,9 @@ import dev.wyck.renderer.packet.data.BlockReplacement;
 import dev.wyck.renderer.packet.data.VirtualBiome;
 import dev.wyck.util.internal.FriendlyColorUtil;
 import eu.okaeri.configs.OkaeriConfig;
-import eu.okaeri.configs.annotation.Comment;
+import eu.okaeri.configs.annotation.Exclude;
+import eu.okaeri.configs.configurer.Configurer;
+import eu.okaeri.configs.exception.OkaeriException;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import dev.lumas.biomes.LittleBiomes;
@@ -50,7 +52,7 @@ public class OkaeriLittleBiome extends OkaeriConfig {
 
     private String anchorDisplayName;
     private List<String> anchorLore;
-    @Comment("Optional radius override (in blocks) for this anchor. Null uses anchorBiomeRadiusBlocks from the top of the config.")
+    @Exclude
     private @Nullable Integer anchorBiomeRadiusBlocks;
     private String fogColor;
     private String waterColor;
@@ -65,6 +67,31 @@ public class OkaeriLittleBiome extends OkaeriConfig {
     private Map<SimpleParticleData, String> ambientParticleData;
     private Map<Material, Material> blockReplacements;
     private Map<String, Object> environmentAttributes;
+
+
+    /**
+     * This optional value is excluded from the generated schema so it is not added to every biome
+     * entry. If it was explicitly provided, the nested configurer retains it as an extra key.
+     */
+    public @Nullable Integer anchorBiomeRadiusBlocks() {
+        if (this.anchorBiomeRadiusBlocks != null) {
+            return this.anchorBiomeRadiusBlocks;
+        }
+        if (this.getConfigurer() == null || !this.getConfigurer().keyExists("anchorBiomeRadiusBlocks")) {
+            return null;
+        }
+        return this.get("anchorBiomeRadiusBlocks", Integer.class);
+    }
+
+
+    @Override
+    public Map<String, Object> asMap(Configurer configurer, boolean conservative) throws OkaeriException {
+        Map<String, Object> values = super.asMap(configurer, conservative);
+        if (this.anchorBiomeRadiusBlocks != null) {
+            values.put("anchorBiomeRadiusBlocks", this.anchorBiomeRadiusBlocks);
+        }
+        return values;
+    }
 
 
     public ResourceKey ResourceKey() {
