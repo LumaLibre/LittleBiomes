@@ -19,6 +19,7 @@ import dev.wyck.renderer.packet.data.BlockReplacement;
 import dev.wyck.renderer.packet.data.VirtualBiome;
 import dev.wyck.util.internal.FriendlyColorUtil;
 import eu.okaeri.configs.OkaeriConfig;
+import eu.okaeri.configs.annotation.Comment;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 import dev.lumas.biomes.LittleBiomes;
@@ -30,6 +31,7 @@ import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,6 +50,8 @@ public class OkaeriLittleBiome extends OkaeriConfig {
 
     private String anchorDisplayName;
     private List<String> anchorLore;
+    @Comment("Optional radius override (in blocks) for this anchor. Null uses anchorBiomeRadiusBlocks from the top of the config.")
+    private @Nullable Integer anchorBiomeRadiusBlocks;
     private String fogColor;
     private String waterColor;
     private String waterFogColor;
@@ -240,6 +244,7 @@ public class OkaeriLittleBiome extends OkaeriConfig {
         private Material anchorMaterial;
         private String anchorDisplayName;
         private List<String> anchorLore;
+        private @Nullable Integer anchorBiomeRadiusBlocks;
         private String color;
         private GrassColorModifier grassColorModifier = GrassColorModifier.NONE;
         private Map<ParticleTypes, Float> ambientParticles = new HashMap<>();
@@ -265,6 +270,11 @@ public class OkaeriLittleBiome extends OkaeriConfig {
 
         public BasicBuilder anchorLore(List<String> anchorLore) {
             this.anchorLore = anchorLore;
+            return this;
+        }
+
+        public BasicBuilder anchorBiomeRadiusBlocks(int anchorBiomeRadiusBlocks) {
+            this.anchorBiomeRadiusBlocks = anchorBiomeRadiusBlocks;
             return this;
         }
 
@@ -299,6 +309,7 @@ public class OkaeriLittleBiome extends OkaeriConfig {
             config.anchorMaterial = this.anchorMaterial;
             config.anchorDisplayName = this.anchorDisplayName;
             config.anchorLore = this.anchorLore;
+            config.anchorBiomeRadiusBlocks = this.anchorBiomeRadiusBlocks;
             config.fogColor = this.color;
             config.waterColor = this.color;
             config.waterFogColor = this.color;

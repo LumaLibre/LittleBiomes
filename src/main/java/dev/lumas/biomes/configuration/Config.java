@@ -91,7 +91,26 @@ public class Config extends OkaeriConfig {
      * anchor -- it has to cover every chunk the circle can touch, so it errs on the wide side.
      */
     public int anchorBiomeChunkRadius() {
-        return (anchorBiomeRadiusBlocks >> 4) + 1;
+        return anchorBiomeChunkRadius(anchorBiomeRadiusBlocks);
+    }
+
+
+    public int anchorBiomeRadiusBlocks(ResourceKey biomeKey) {
+        OkaeriLittleBiome littleBiome = getLittleBiome(biomeKey);
+        if (littleBiome == null || littleBiome.anchorBiomeRadiusBlocks() == null) {
+            return anchorBiomeRadiusBlocks;
+        }
+        return littleBiome.anchorBiomeRadiusBlocks();
+    }
+
+
+    public int anchorBiomeChunkRadius(ResourceKey biomeKey) {
+        return anchorBiomeChunkRadius(anchorBiomeRadiusBlocks(biomeKey));
+    }
+
+
+    private static int anchorBiomeChunkRadius(int radiusBlocks) {
+        return (radiusBlocks >> 4) + 1;
     }
 
 

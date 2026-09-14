@@ -63,12 +63,12 @@ public final class AnchorScanner {
                 LittleBiomes.debug("Cached anchor at %d,%d in world %s from a loaded-chunk scan.".formatted(
                         chunkX, chunkZ, world.getName()
                 ));
-                refreshAround(chunk);
+                refreshAround(chunk, biomeKey);
             }
         });
     }
 
-    public static void refreshAround(Chunk chunk) {
-        BIOME_UPDATER.updateChunkRadius(chunk, LittleBiomes.okaeriConfig().anchorBiomeChunkRadius());
+    public static void refreshAround(Chunk chunk, ResourceKey biomeKey) {
+        BIOME_UPDATER.updateChunkRadius(chunk, LittleBiomes.okaeriConfig().anchorBiomeChunkRadius(biomeKey));
     }
 }

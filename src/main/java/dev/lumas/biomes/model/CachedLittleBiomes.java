@@ -108,7 +108,7 @@ public final class CachedLittleBiomes {
         return !foreign.fullyCovered() && !covers(foreign.anchors(), position);
     }
 
-    private static boolean covers(List<SimpleBlockLocation> anchors, BiomePosition position) {
+    private static boolean covers(List<CoverageAnchor> anchors, BiomePosition position) {
         if (anchors.isEmpty()) {
             return false;
         }
@@ -116,11 +116,12 @@ public final class CachedLittleBiomes {
         // The centre of the cell's 4x4 footprint, in half-blocks.
         long cellX = ((long) position.blockX() << 1) + 3;
         long cellZ = ((long) position.blockZ() << 1) + 3;
-        long radius = radiusInHalfBlocks();
 
-        for (SimpleBlockLocation anchor : anchors) {
+        for (CoverageAnchor coverageAnchor : anchors) {
+            SimpleBlockLocation anchor = coverageAnchor.anchor();
             long dx = cellX - anchorCentre(anchor.x());
             long dz = cellZ - anchorCentre(anchor.z());
+            long radius = coverageAnchor.radiusInHalfBlocks();
             if (dx * dx + dz * dz <= radius * radius) {
                 return true;
             }
@@ -173,10 +174,7 @@ public final class CachedLittleBiomes {
 
         long minX = (long) chunk.chunkX() << 5;
         long minZ = (long) chunk.chunkZ() << 5;
-        long radius = radiusInHalfBlocks();
-        long radiusSquared = radius * radius;
-
-        List<SimpleBlockLocation> anchors = new ArrayList<>();
+        List<CoverageAnchor> anchors = new ArrayList<>();
         boolean fullyCovered = false;
         for (var entry : cachedChunkLocations.entrySet()) {
             CachedAnchor cachedAnchor = entry.getValue();
@@ -186,6 +184,8 @@ public final class CachedLittleBiomes {
             }
 
             SimpleBlockLocation anchor = cachedAnchor.anchor();
+            long radius = radiusInHalfBlocks(cachedAnchor.biomeKey());
+            long radiusSquared = radius * radius;
             long anchorX = anchorCentre(anchor.x());
             long anchorZ = anchorCentre(anchor.z());
 
@@ -195,7 +195,7 @@ public final class CachedLittleBiomes {
             if (nearX * nearX + nearZ * nearZ > radiusSquared) {
                 continue;
             }
-            anchors.add(anchor);
+            anchors.add(new CoverageAnchor(anchor, radius));
 
             long farX = furthestCellCentreDistance(anchorX, minX);
             long farZ = furthestCellCentreDistance(anchorZ, minZ);
@@ -222,8 +222,8 @@ public final class CachedLittleBiomes {
         return worldGuardHook.getWorldGuardRegionLittleBiomeName(chunk);
     }
 
-    private static long radiusInHalfBlocks() {
-        return (long) LittleBiomes.okaeriConfig().anchorBiomeRadiusBlocks() << 1;
+    private static long radiusInHalfBlocks(ResourceKey biomeKey) {
+        return (long) LittleBiomes.okaeriConfig().anchorBiomeRadiusBlocks(biomeKey) << 1;
     }
 
     private static long anchorCentre(int blockCoordinate) {
@@ -338,7 +338,10 @@ public final class CachedLittleBiomes {
     }
 
 
-    public record ChunkCoverage(List<SimpleBlockLocation> anchors, boolean fullyCovered) {
+    private record CoverageAnchor(SimpleBlockLocation anchor, long radiusInHalfBlocks) { }
+
+
+    public record ChunkCoverage(List<CoverageAnchor> anchors, boolean fullyCovered) {
 
         private static final ChunkCoverage EMPTY = new ChunkCoverage(List.of(), false);
     }

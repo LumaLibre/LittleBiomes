@@ -37,7 +37,7 @@ public class ChunkListeners implements Listener {
         ResourceKey biomeKey = ResourceKey.fromString(biomeKeyString);
         SimpleBlockLocation anchorLocation = SimpleBlockLocation.fromSerialized(serializedAnchor, chunk.getWorld());
         if (CachedLittleBiomes.INSTANCE.cacheChunk(worldTiedChunkLocation, biomeKey, anchorLocation)) {
-            AnchorScanner.refreshAround(chunk);
+            AnchorScanner.refreshAround(chunk, biomeKey);
         }
     }
 }
