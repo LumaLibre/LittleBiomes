@@ -72,10 +72,8 @@ public class WorldGuardHook {
                 BlockVector3.at(minX + 15, world.getMaxHeight(), minZ + 15)
         );
 
+        // size() excludes __global__, which queryValue falls back to, so don't short-circuit on an empty set
         ApplicableRegionSet regionSet = regionManager.getApplicableRegions(chunkColumn);
-        if (regionSet.size() == 0) {
-            return null;
-        }
         return regionSet.queryValue(null, this.littleBiomeFlag);
     }
 

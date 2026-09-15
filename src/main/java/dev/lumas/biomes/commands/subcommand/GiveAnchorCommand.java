@@ -1,9 +1,10 @@
 package dev.lumas.biomes.commands.subcommand;
 
-import com.google.common.base.Preconditions;
 import dev.lumas.biomes.LittleBiomes;
 import dev.lumas.biomes.commands.Subcommand;
 import dev.lumas.biomes.configuration.OkaeriLittleBiome;
+import dev.lumas.biomes.util.TextUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -15,18 +16,45 @@ public class GiveAnchorCommand implements Subcommand {
         if (args.isEmpty()) {
             return false;
         }
-        String biomeName = Preconditions.checkNotNull(args.getFirst(), "You must provide a biome name.");
+        String biomeName = args.getFirst();
 
-        OkaeriLittleBiome okaeriLittleBiome =  LittleBiomes.okaeriConfig().getLittleBiomeByName(biomeName);
-        Preconditions.checkNotNull(okaeriLittleBiome, "No little biome found with name: " + biomeName);
+        OkaeriLittleBiome okaeriLittleBiome = LittleBiomes.okaeriConfig().getLittleBiomeByName(biomeName);
+        if (okaeriLittleBiome == null) {
+            TextUtil.msg(sender, "No little biome found with name: " + biomeName);
+            return true;
+        }
 
-        Player player = (Player) sender;
-        player.give(okaeriLittleBiome.anchorItem());
+        Player target;
+        if (args.size() > 1) {
+            target = Bukkit.getPlayer(args.get(1));
+            if (target == null) {
+                TextUtil.msg(sender, "No online player found with name: " + args.get(1));
+                return true;
+            }
+        } else if (sender instanceof Player player) {
+            target = player;
+        } else {
+            TextUtil.msg(sender, "You must specify a player when running this command from console.");
+            return true;
+        }
+
+        target.give(okaeriLittleBiome.anchorItem());
+        if (target != sender) {
+            TextUtil.msg(sender, "Gave " + okaeriLittleBiome.name() + " anchor to " + target.getName() + ".");
+        }
         return true;
     }
 
     @Override
     public List<String> tabComplete(CommandSender sender, String label, List<String> args) {
+        if (args.size() == 2) {
+            return Bukkit.getOnlinePlayers().stream()
+                    .map(Player::getName)
+                    .toList();
+        }
+        if (args.size() > 2) {
+            return List.of();
+        }
         return LittleBiomes.okaeriConfig().littleBiomes().stream()
                 .map(OkaeriLittleBiome::name)
                 .toList();
@@ -37,8 +65,8 @@ public class GiveAnchorCommand implements Subcommand {
         return Options.builder()
                 .label("giveanchor")
                 .permission("littlebiomes.command.giveanchor")
-                .playerOnly(true)
-                .usage("/<command> give <biome> [amount]")
+                .playerOnly(false)
+                .usage("/<command> giveanchor <biome> [player]")
                 .build();
     }
 }
